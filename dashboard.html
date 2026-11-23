@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>내 계정</title>
+<link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script src="auth.js"></script>
+</head>
+<body>
+<main class="card" id="card" hidden>
+  <img id="avatar" class="avatar" alt="" hidden>
+  <h1>환영합니다</h1>
+  <p class="sub">로그인에 성공했습니다.</p>
+  <div class="info">
+    <div><b>이메일</b><span id="email"></span></div>
+    <div><b>이름</b><span id="name"></span></div>
+    <div><b>로그인 방식</b><span id="provider"></span></div>
+    <div><b>최근 로그인</b><span id="last"></span></div>
+  </div>
+  <button class="btn secondary" id="logoutBtn">로그아웃</button>
+</main>
+<script>
+(async () => {
+  if (AUTH_NOT_CONFIGURED) return location.replace(pageUrl("index.html"));
+  // OAuth/이메일 인증 후 돌아올 때 URL의 토큰을 처리할 시간을 줍니다
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) return location.replace(pageUrl("index.html"));
+  const u = session.user, m = u.user_metadata || {};
+  document.getElementById("email").textContent = u.email || "-";
+  document.getElementById("name").textContent = m.full_name || m.user_name || m.name || "-";
+  document.getElementById("provider").textContent = (u.app_metadata && u.app_metadata.provider) || "email";
+  document.getElementById("last").textContent = u.last_sign_in_at ? new Date(u.last_sign_in_at).toLocaleString("ko-KR") : "-";
+  if (m.avatar_url) { const a = document.getElementById("avatar"); a.src = m.avatar_url; a.hidden = false; }
+  history.replaceState(null, "", location.pathname); // 주소창의 토큰 제거
+  document.getElementById("card").hidden = false;
+  document.getElementById("logoutBtn").onclick = async () => {
+    await sb.auth.signOut();
+    location.replace(pageUrl("index.html"));
+  };
+  sb.auth.onAuthStateChange((event) => { if (event === "SIGNED_OUT") location.replace(pageUrl("index.html")); });
+})();
+</script>
+</body>
+</html>
