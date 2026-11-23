@@ -28,7 +28,6 @@ body{height:100vh;overflow:hidden;display:flex;flex-direction:column}
 .row.mine{flex-direction:row-reverse}
 .row .body{max-width:75%;min-width:0;display:flex;flex-direction:column;align-items:flex-start}
 .row.mine .body{align-items:flex-end}
-.ava{width:32px;height:32px;border-radius:50%;color:#fff;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:none}
 .meta{font-size:12px;color:#6b7280;margin-bottom:4px;display:flex;gap:6px}
 .meta .name{font-weight:700}
 .bubble{background:#fff;border:1px solid #e5e7eb;border-radius:4px 12px 12px 12px;padding:9px 12px;font-size:15px;line-height:1.5;white-space:pre-wrap;word-break:break-word;max-width:100%}
@@ -59,7 +58,7 @@ body{height:100vh;overflow:hidden;display:flex;flex-direction:column}
 .picker{position:absolute;bottom:62px;left:12px;background:#fff;border:1px solid #d1d5db;border-radius:8px;padding:8px;display:grid;grid-template-columns:repeat(9,36px);gap:2px;z-index:6}
 .picker button{border:0;background:none;font-size:20px;width:36px;height:36px;cursor:pointer;border-radius:6px}
 .picker button:hover{background:#f3f4f6}
-.closed-note{padding:14px;border-top:1px solid #e5e7eb;text-align:center;font-size:14px;color:#4b5563;background:#fff;border-radius:0 0 8px 8px}
+.closed-note{padding:18px 14px;border-top:1px solid #e5e7eb;text-align:center;font-size:14px;color:#4b5563;background:#fff;border-radius:0 0 8px 8px}
 .side{display:flex;flex-direction:column;gap:12px;min-height:0;overflow-y:auto}
 .kw{list-style:none}
 .kw li{display:grid;grid-template-columns:20px 1fr 36px;gap:6px;align-items:center;font-size:13px;margin-bottom:6px}
@@ -81,12 +80,21 @@ body{height:100vh;overflow:hidden;display:flex;flex-direction:column}
 }
 </style>
 </head>
-<body>
+<body class="bg-room">
 <header class="topbar">
   <a class="brand" href="discussion.html">혁신 토론방</a>
   <nav><a href="discussion.html">토론 목록</a><a href="#" id="reportLink">분석 대시보드</a><a href="#" id="logoutBtn">로그아웃</a></nav>
 </header>
 <div id="fatal" class="msg error fatal" hidden></div>
+<div class="end-modal" id="endModal" hidden role="dialog" aria-modal="true" aria-labelledby="endTitle">
+  <div class="box">
+    <div class="ico">🏁</div>
+    <h3 id="endTitle">토론이 종료되었습니다</h3>
+    <p>참여해 주셔서 감사합니다.<br>지금 바로 주요 키워드 빈도와 감정 반응 분석 결과를 확인할 수 있습니다.</p>
+    <a class="btn cta lg pulse" href="#" id="endModalGo">📊 분석 대시보드로 이동 →</a>
+    <button type="button" class="later" id="endModalLater">닫고 대화 내용 계속 보기</button>
+  </div>
+</div>
 <main class="room" id="room" hidden>
   <section class="panel chat">
     <div class="room-head">
@@ -113,7 +121,11 @@ body{height:100vh;overflow:hidden;display:flex;flex-direction:column}
       <span class="count" id="charCount">0/500</span>
       <button class="btn" id="sendBtn" style="height:42px">보내기</button>
     </form>
-    <div class="closed-note" id="closedNote" hidden>토론이 종료되었습니다. <a href="#" id="closedReport">키워드 분석 결과 보기</a></div>
+    <div class="closed-note" id="closedNote" hidden>
+      <div style="font-size:15px;font-weight:700;color:#111827;margin-bottom:4px">토론이 종료되었습니다</div>
+      <div style="font-size:13px;color:#6b7280;margin-bottom:12px">모든 의견의 주요 키워드와 감정 반응을 분석한 결과를 확인하세요.</div>
+      <a class="btn cta lg pulse" href="#" id="closedReport">📊 분석 대시보드 보기 →</a>
+    </div>
   </section>
   <aside class="side">
     <div class="panel">
@@ -146,6 +158,13 @@ body{height:100vh;overflow:hidden;display:flex;flex-direction:column}
   if (!topicId) { location.replace(pageUrl("discussion.html")); return; }
   $("reportLink").href = "report.html?id=" + topicId;
   $("closedReport").href = "report.html?id=" + topicId;
+  $("endModalGo").href = "report.html?id=" + topicId;
+  $("endModalLater").onclick = () => { $("endModal").hidden = true; };
+  function setMe() {
+    $("me").innerHTML = state.myAlias !== null
+      ? Forum.avatarHtml(state.myAlias, "ava-sm") + Forum.esc(Forum.aliasName(state.myAlias))
+      : "첫 의견을 보내면 무작위로 정해집니다";
+  }
 
   const state = {
     topic: null, msgs: new Map(), counts: new Map(), mine: new Set(),
@@ -191,7 +210,7 @@ body{height:100vh;overflow:hidden;display:flex;flex-direction:column}
     const picker = (!m.hidden && live)
       ? `<div class="react-picker" hidden>${Forum.REACTIONS.map((r) => `<button type="button" data-act="react" data-emoji="${r.e}" title="${r.label}">${r.e}<span>${r.label}</span></button>`).join("")}</div>`
       : "";
-    return `<div class="ava" style="background:${color}">${Forum.esc(name.slice(3, 4))}</div>
+    return `${Forum.avatarHtml(m.alias_no)}
       <div class="body">
         <div class="meta"><span class="name" style="color:${color}">${Forum.esc(name)}${mine ? " (나)" : ""}</span><span>${Forum.fmtTime(m.created_at)}</span></div>
         ${quote}
@@ -260,8 +279,13 @@ body{height:100vh;overflow:hidden;display:flex;flex-direction:column}
     if (!live) { setReply(null); $("emojiPicker").hidden = true; }
     $("adminBar").hidden = !state.isAdmin;
     $("toggleStatus").textContent = live ? "토론 종료하기" : "토론 다시 열기";
+    $("reportLink").classList.toggle("nav-cta", !live);
+    $("reportLink").textContent = live ? "분석 대시보드" : "📊 분석 대시보드 보기";
     renderTimer();
     if (changed) rerenderAll();
+    // 진행 중이던 토론이 끝나는 순간 분석 대시보드 이동 안내를 크게 띄웁니다.
+    if (changed && !live) $("endModal").hidden = false;
+    if (live) $("endModal").hidden = true;
   }
 
   function renderTimer() {
@@ -347,7 +371,7 @@ body{height:100vh;overflow:hidden;display:flex;flex-direction:column}
         state.counts.set(r.message_id, c);
       });
       state.mine = new Set((mr.data || []).map((r) => r.message_id + "|" + r.emoji));
-      $("me").textContent = state.myAlias !== null ? Forum.aliasName(state.myAlias) : "첫 의견을 보내면 정해집니다";
+      setMe();
       state.loaded = true;
       $("room").hidden = false;
       updateStatus();
@@ -515,7 +539,7 @@ body{height:100vh;overflow:hidden;display:flex;flex-direction:column}
       const { data } = await sb.rpc("my_alias", { p_topic: topicId });
       if (data !== null && data !== undefined) {
         state.myAlias = data;
-        $("me").textContent = Forum.aliasName(data);
+        setMe();
         rerenderAll();
       }
     }
@@ -534,5 +558,6 @@ body{height:100vh;overflow:hidden;display:flex;flex-direction:column}
   };
 })();
 </script>
+<div class="art-credit">배경: AI 생성 일러스트</div>
 </body>
 </html>

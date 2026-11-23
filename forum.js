@@ -1,8 +1,12 @@
 // 토론방 공통 기능
 (function () {
-  const ANIMALS = ["펭귄", "수달", "고래", "여우", "판다", "부엉이", "다람쥐", "돌고래", "코알라", "고양이",
-    "강아지", "토끼", "사슴", "거북이", "하마", "기린", "미어캣", "햄스터", "너구리", "알파카",
-    "라쿤", "치타", "플라밍고", "북극곰", "카멜레온", "해달", "두루미", "오리", "참새", "고슴도치"];
+  // 익명 이름과 프로필 사진 (img/animals/ 폴더의 사진과 순서가 같아야 합니다)
+  const ANIMALS = [
+    ["펭귄", "penguin"], ["수달", "otter"], ["여우", "fox"], ["판다", "panda"], ["부엉이", "owl"], ["다람쥐", "squirrel"],
+    ["코알라", "koala"], ["고양이", "cat"], ["강아지", "puppy"], ["토끼", "rabbit"], ["아기사슴", "deer"], ["햄스터", "hamster"],
+    ["미어캣", "meerkat"], ["너구리", "raccoon"], ["알파카", "alpaca"], ["북극곰", "polarbear"], ["아기오리", "duck"], ["고슴도치", "hedgehog"],
+    ["기린", "giraffe"], ["거북이", "turtle"], ["돌고래", "dolphin"], ["레서판다", "redpanda"], ["물범", "seal"], ["친칠라", "chinchilla"]
+  ];
   const COLORS = ["#2563eb", "#0891b2", "#7c3aed", "#db2777", "#ea580c", "#16a34a", "#ca8a04", "#4f46e5", "#0d9488", "#9333ea"];
   const REACTIONS = [
     { e: "👍", label: "공감", tone: "pos" },
@@ -27,7 +31,17 @@
     if (!n) return "익명";
     const i = (n - 1) % ANIMALS.length;
     const round = Math.floor((n - 1) / ANIMALS.length);
-    return "익명 " + ANIMALS[i] + (round > 0 ? String(round + 1) : "");
+    return "익명 " + ANIMALS[i][0] + (round > 0 ? String(round + 1) : "");
+  }
+  function aliasImg(n) {
+    if (!n) return "";
+    return "img/animals/" + ANIMALS[(n - 1) % ANIMALS.length][1] + ".jpg";
+  }
+  function avatarHtml(n, cls) {
+    const name = aliasName(n);
+    const color = aliasColor(n);
+    if (!n) return `<span class="${cls || "ava"}" style="background:#9ca3af"></span>`;
+    return `<img class="${cls || "ava"}" src="${aliasImg(n)}" alt="${esc(name)}" title="${esc(name)}" loading="lazy" style="border-color:${color}">`;
   }
   function aliasColor(n) { return COLORS[((n || 1) - 1) % COLORS.length]; }
   function isLive(t) {
@@ -104,7 +118,7 @@
   }
 
   window.Forum = {
-    REACTIONS, INSERT_EMOJIS, esc, aliasName, aliasColor, isLive, fmtTime, fmtDateTime,
+    REACTIONS, INSERT_EMOJIS, esc, aliasName, aliasImg, avatarHtml, aliasColor, isLive, fmtTime, fmtDateTime,
     requireSession, bindLogout, dbError, toast, fetchAll
   };
 })();

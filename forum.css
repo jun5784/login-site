@@ -30,3 +30,32 @@ table{width:100%;border-collapse:collapse;font-size:14px}
 th,td{padding:8px 10px;border-bottom:1px solid #e5e7eb;text-align:left;vertical-align:top}
 th{font-size:12px;color:#6b7280;font-weight:600;background:#f9fafb}
 td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+
+/* ===== 애니메이션 풍경 배경 테마 ===== */
+body.bg-lobby,body.bg-room{background-color:#dbeafe;background-size:cover;background-position:center bottom;background-attachment:fixed;background-repeat:no-repeat}
+body.bg-lobby{background-image:linear-gradient(rgba(255,255,255,.18),rgba(255,255,255,.18)),url("img/bg/lobby.jpg")}
+body.bg-room{background-image:linear-gradient(rgba(255,255,255,.12),rgba(255,255,255,.12)),url("img/bg/room.jpg")}
+body.bg-lobby .topbar,body.bg-room .topbar{background:rgba(255,255,255,.86);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);border-bottom-color:rgba(255,255,255,.6)}
+body.bg-lobby .panel,body.bg-room .panel{background:rgba(255,255,255,.9);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);border-color:rgba(255,255,255,.7);box-shadow:0 6px 24px rgba(30,58,95,.15)}
+body.bg-lobby .page-head{background:rgba(255,255,255,.82);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);border-radius:12px;padding:16px 18px}
+.art-credit{position:fixed;right:10px;bottom:6px;font-size:11px;color:rgba(255,255,255,.9);text-shadow:0 1px 2px rgba(0,0,0,.5);pointer-events:none;z-index:1}
+@media(max-width:640px){body.bg-lobby,body.bg-room{background-attachment:scroll}}
+
+/* 동물 프로필 사진 */
+img.ava,span.ava{width:38px;height:38px;border-radius:50%;object-fit:cover;border:2px solid #fff;background:#e5e7eb;flex:none;display:block}
+img.ava-sm{width:24px;height:24px;border-radius:50%;object-fit:cover;border:2px solid #fff;vertical-align:middle;margin-right:4px}
+
+/* 분석 대시보드로 가는 강조 버튼 */
+.btn.cta{background:#f97316;color:#fff;font-size:16px;padding:12px 22px;border-radius:10px;box-shadow:0 4px 14px rgba(249,115,22,.45)}
+.btn.cta:hover{background:#ea580c}
+.btn.cta.lg{font-size:18px;padding:16px 28px;width:100%;max-width:420px}
+.btn.cta.pulse{animation:ctaPulse 1.8s ease-in-out infinite}
+@keyframes ctaPulse{0%,100%{box-shadow:0 4px 14px rgba(249,115,22,.45)}50%{box-shadow:0 0 0 8px rgba(249,115,22,.18),0 4px 18px rgba(249,115,22,.6)}}
+.topbar nav a.nav-cta{background:#f97316;color:#fff;padding:6px 12px;border-radius:8px;font-weight:700}
+.topbar nav a.nav-cta:hover{background:#ea580c;text-decoration:none}
+.end-modal{position:fixed;inset:0;background:rgba(17,24,39,.55);display:flex;align-items:center;justify-content:center;z-index:200;padding:16px}
+.end-modal .box{background:#fff;border-radius:16px;max-width:460px;width:100%;padding:28px 24px;text-align:center;box-shadow:0 20px 50px rgba(0,0,0,.3)}
+.end-modal .ico{font-size:44px;line-height:1}
+.end-modal h3{font-size:22px;margin:12px 0 8px}
+.end-modal p{font-size:14px;color:#4b5563;margin-bottom:20px;line-height:1.6}
+.end-modal .later{display:block;margin:14px auto 0;border:0;background:none;color:#6b7280;font-size:14px;cursor:pointer;font-family:inherit;text-decoration:underline}
