@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>익명 토론방</title>
+<link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script src="auth.js"></script>
+<style>
+body.board{display:block;padding:0;align-items:initial}
+.wrap{max-width:760px;margin:0 auto;padding:0 16px}
+.top{background:#fff;border-bottom:1px solid #e5e7eb;position:sticky;top:0;z-index:5}
+.top .wrap{display:flex;justify-content:space-between;align-items:center;height:56px}
+.brand{font-weight:700;font-size:18px;color:#111827}
+.top nav{display:flex;gap:14px;align-items:center;font-size:14px}
+.link{border:0;background:none;color:#2563eb;font-size:14px;cursor:pointer;padding:0}
+.link:hover{text-decoration:underline}.link.danger{color:#b91c1c}
+main.wrap{padding-top:20px;padding-bottom:48px}
+.btn.small{width:auto;margin-top:0;padding:9px 18px;display:inline-block;text-align:center;font-size:14px}
+a.btn{text-decoration:none}
+.bar{display:flex;gap:8px;align-items:center}
+.bar input{flex:1}
+.notice{font-size:13px;color:#6b7280;margin:12px 0}
+.list{list-style:none;background:#fff;border:1px solid #e5e7eb;border-radius:10px}
+.list li{border-top:1px solid #f1f2f4}.list li:first-child{border-top:0}
+.list a{display:block;padding:14px 16px;color:#111827}
+.list a:hover{background:#f9fafb;text-decoration:none}
+.list .t{font-size:15px;font-weight:600;word-break:break-all}
+.list .c{color:#2563eb;font-weight:600;margin-left:6px;font-size:14px}
+.meta{font-size:13px;color:#6b7280;margin-top:4px}
+.badge{display:inline-block;font-size:11px;border:1px solid #bfdbfe;color:#1d4ed8;border-radius:4px;padding:0 5px;margin-left:6px;vertical-align:1px}
+.empty{padding:40px 16px;text-align:center;color:#9ca3af;font-size:14px}
+#moreBtn{margin-top:12px}
+h2{font-size:20px;margin-bottom:4px;word-break:break-all}
+textarea{width:100%;padding:11px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:15px;font-family:inherit;outline:none;resize:vertical}
+textarea:focus{border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.15)}
+.panel{background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:20px}
+.count{font-size:12px;color:#9ca3af;text-align:right;margin-top:4px}
+.actions{display:flex;justify-content:flex-end;gap:8px;align-items:center;margin-top:12px}
+.back{display:inline-block;font-size:14px;margin-bottom:12px}
+.body{white-space:pre-wrap;word-break:break-all;line-height:1.7;margin-top:16px;font-size:15px}
+.post-actions{margin-top:16px;text-align:right}
+.ctitle{font-size:16px;margin:24px 0 8px}
+.comments{list-style:none}
+.comments li{background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:12px 14px;margin-bottom:8px}
+.comments .head{display:flex;justify-content:space-between;font-size:13px;color:#6b7280}
+.comments .nick{font-weight:700;color:#374151}.comments .nick.op{color:#2563eb}
+.comments .txt{white-space:pre-wrap;word-break:break-all;margin-top:6px;font-size:14px;line-height:1.6}
+#cForm{margin-top:12px}
+</style>
+</head>
+<body class="board">
+<header class="top"><div class="wrap">
+  <a href="#/" class="brand">익명 토론방</a>
+  <nav><a href="dashboard.html">내 계정</a><button class="link" id="logoutBtn" type="button">로그아웃</button></nav>
+</div></header>
+
+<main class="wrap" id="app" hidden>
+  <div id="msg" class="msg" hidden></div>
+
+  <!-- 글 목록 -->
+  <section id="listView" hidden>
+    <div class="bar">
+      <input id="q" type="search" placeholder="제목으로 검색">
+      <a class="btn small" href="#/write">글쓰기</a>
+    </div>
+    <p class="notice">글과 댓글의 작성자는 모두 익명으로 표시됩니다. 비방, 욕설, 개인정보가 담긴 글은 삼가 주세요.</p>
+    <ul id="list" class="list"></ul>
+    <button id="moreBtn" class="btn secondary" type="button" hidden>더 보기</button>
+  </section>
+
+  <!-- 글쓰기 -->
+  <section id="writeView" hidden>
+    <a href="#/" class="back">← 목록</a>
+    <div class="panel">
+      <h2>새 글 쓰기</h2>
+      <p class="sub" style="margin-bottom:0">작성자는 '익명'으로 표시됩니다.</p>
+      <form id="writeForm" novalidate>
+        <label for="wTitle">제목</label>
+        <input id="wTitle" maxlength="100" placeholder="제목 (100자 이내)">
+        <label for="wContent">내용</label>
+        <textarea id="wContent" maxlength="5000" rows="12" placeholder="토론하고 싶은 주제를 적어 주세요."></textarea>
+        <div class="count"><span id="wLen">0</span> / 5000</div>
+        <div class="actions">
+          <a class="btn secondary small" href="#/">취소</a>
+          <button class="btn small" id="wBtn" type="submit">등록</button>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <!-- 글 보기 -->
+  <section id="postView" hidden>
+    <a href="#/" class="back">← 목록</a>
+    <article class="panel">
+      <h2 id="pTitle"></h2>
+      <div class="meta" id="pMeta"></div>
+      <div class="body" id="pBody"></div>
+      <div class="post-actions" id="pActions"></div>
+    </article>
+    <h3 class="ctitle">댓글 <span id="cCount">0</span></h3>
+    <ul id="comments" class="comments"></ul>
+    <form id="cForm" class="panel" novalidate>
+      <textarea id="cContent" maxlength="1000" rows="3" placeholder="댓글을 입력하세요. 익명으로 등록됩니다."></textarea>
+      <div class="actions">
+        <span class="count" style="margin:0"><span id="cLen">0</span> / 1000</span>
+        <button class="btn small" id="cBtn" type="submit">댓글 등록</button>
+      </div>
+    </form>
+  </section>
+</main>
+
+<script>
+const $ = (s) => document.querySelector(s);
+const PAGE_SIZE = 20;
+let listOffset = 0;
+let currentPostId = null;
+let searchTimer = null;
+
+// 화면 요소를 안전하게 만듭니다 (글 내용은 textContent로만 넣어 스크립트 삽입을 막습니다)
+function el(tag, attrs, ...children) {
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs || {})) {
+    if (k === "class") e.className = v;
+    else if (k.startsWith("on")) e.addEventListener(k.slice(2), v);
+    else e.setAttribute(k, v);
+  }
+  for (const c of children) {
+    if (c !== null && c !== undefined) e.append(c);
+  }
+  return e;
+}
+
+function timeText(iso) {
+  const d = new Date(iso);
+  const s = (Date.now() - d.getTime()) / 1000;
+  if (s < 60) return "방금 전";
+  if (s < 3600) return Math.floor(s / 60) + "분 전";
+  if (s < 86400) return Math.floor(s / 3600) + "시간 전";
+  return d.toLocaleString("ko-KR", { year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" });
+}
+
+function err(e) {
+  const m = (e && e.message) || String(e);
+  if (/permission denied|JWT/i.test(m)) return "권한이 없습니다. 다시 로그인해 주세요.";
+  if (/relation .* does not exist|Could not find/i.test(m)) return "토론방 데이터베이스가 아직 설정되지 않았습니다. board.sql을 Supabase에서 실행해 주세요.";
+  return translateError(e);
+}
+
+function showView(id) {
+  for (const v of ["listView", "writeView", "postView"]) {
+    document.getElementById(v).hidden = v !== id;
+  }
+}
+
+// ---------- 목록 ----------
+async function loadList(reset) {
+  const list = $("#list");
+  if (reset) {
+    listOffset = 0;
+    list.replaceChildren();
+  }
+  let query = sb.from("posts_public")
+    .select("id,title,created_at,is_mine,comment_count")
+    .order("created_at", { ascending: false })
+    .range(listOffset, listOffset + PAGE_SIZE - 1);
+  const q = $("#q").value.trim().replace(/[%_,()]/g, "");
+  if (q) query = query.ilike("title", "%" + q + "%");
+  const { data, error } = await query;
+  if (error) return showMsg($("#msg"), err(error));
+  if (reset && data.length === 0) {
+    list.append(el("li", { class: "empty" }, q ? "검색 결과가 없습니다." : "아직 글이 없습니다. 첫 번째 토론 주제를 올려 보세요."));
+  }
+  for (const p of data) {
+    list.append(el("li", {},
+      el("a", { href: "#/post/" + p.id },
+        el("span", { class: "t" }, p.title),
+        p.comment_count > 0 ? el("span", { class: "c" }, "[" + p.comment_count + "]") : null,
+        p.is_mine ? el("span", { class: "badge" }, "내 글") : null,
+        el("div", { class: "meta" }, "익명 · " + timeText(p.created_at))
+      )
+    ));
+  }
+  listOffset += data.length;
+  $("#moreBtn").hidden = data.length < PAGE_SIZE;
+}
+
+// ---------- 글 보기 ----------
+async function loadPost(id) {
+  currentPostId = id;
+  $("#pTitle").textContent = "불러오는 중...";
+  $("#pMeta").textContent = "";
+  $("#pBody").textContent = "";
+  $("#pActions").replaceChildren();
+  $("#comments").replaceChildren();
+  const { data: post, error } = await sb.from("posts_public").select("*").eq("id", id).maybeSingle();
+  if (error) return showMsg($("#msg"), err(error));
+  if (!post) {
+    $("#pTitle").textContent = "삭제되었거나 없는 글입니다.";
+    $("#cForm").hidden = true;
+    return;
+  }
+  $("#cForm").hidden = false;
+  $("#pTitle").textContent = post.title;
+  $("#pMeta").textContent = "익명" + (post.is_mine ? " (나)" : "") + " · " + timeText(post.created_at);
+  $("#pBody").textContent = post.content;
+  if (post.is_mine) {
+    $("#pActions").append(el("button", { class: "link danger", type: "button", onclick: () => deletePost(id) }, "글 삭제"));
+  }
+  await loadComments(id);
+}
+
+async function loadComments(id) {
+  const { data, error } = await sb.from("comments_public").select("*").eq("post_id", id).order("created_at", { ascending: true });
+  if (error) return showMsg($("#msg"), err(error));
+  const box = $("#comments");
+  box.replaceChildren();
+  $("#cCount").textContent = data.length;
+  if (data.length === 0) box.append(el("li", { class: "empty" }, "첫 댓글을 남겨 보세요."));
+  for (const c of data) {
+    box.append(el("li", {},
+      el("div", { class: "head" },
+        el("span", {},
+          el("span", { class: "nick" + (c.nickname === "글쓴이" ? " op" : "") }, c.nickname + (c.is_mine ? " (나)" : "")),
+          " · " + timeText(c.created_at)
+        ),
+        c.is_mine ? el("button", { class: "link danger", type: "button", onclick: () => deleteComment(c.id) }, "삭제") : null
+      ),
+      el("div", { class: "txt" }, c.content)
+    ));
+  }
+}
+
+async function deletePost(id) {
+  if (!confirm("이 글을 삭제할까요? 댓글도 함께 삭제되며 되돌릴 수 없습니다.")) return;
+  const { error } = await sb.rpc("delete_post", { p_id: id });
+  if (error) return showMsg($("#msg"), err(error));
+  location.hash = "#/";
+}
+
+async function deleteComment(id) {
+  if (!confirm("이 댓글을 삭제할까요?")) return;
+  const { error } = await sb.rpc("delete_comment", { p_id: id });
+  if (error) return showMsg($("#msg"), err(error));
+  await loadPost(currentPostId);
+}
+
+// ---------- 화면 전환 (#/ , #/write , #/post/번호) ----------
+async function route() {
+  showMsg($("#msg"), "");
+  const h = location.hash || "#/";
+  const m = h.match(/^#\/post\/(\d+)$/);
+  window.scrollTo(0, 0);
+  if (h === "#/write") {
+    showView("writeView");
+    $("#wTitle").focus();
+  } else if (m) {
+    showView("postView");
+    await loadPost(Number(m[1]));
+  } else {
+    showView("listView");
+    await loadList(true);
+  }
+}
+
+// ---------- 이벤트 ----------
+$("#writeForm").onsubmit = async (e) => {
+  e.preventDefault();
+  const title = $("#wTitle").value.trim();
+  const content = $("#wContent").value.trim();
+  if (!title) return showMsg($("#msg"), "제목을 입력해 주세요.");
+  if (!content) return showMsg($("#msg"), "내용을 입력해 주세요.");
+  const btn = $("#wBtn");
+  btn.disabled = true;
+  const { data, error } = await sb.rpc("create_post", { p_title: title, p_content: content });
+  btn.disabled = false;
+  if (error) return showMsg($("#msg"), err(error));
+  $("#wTitle").value = "";
+  $("#wContent").value = "";
+  $("#wLen").textContent = "0";
+  location.hash = "#/post/" + data;
+};
+
+$("#cForm").onsubmit = async (e) => {
+  e.preventDefault();
+  const content = $("#cContent").value.trim();
+  if (!content) return showMsg($("#msg"), "댓글 내용을 입력해 주세요.");
+  const btn = $("#cBtn");
+  btn.disabled = true;
+  const { error } = await sb.rpc("create_comment", { p_post_id: currentPostId, p_content: content });
+  btn.disabled = false;
+  if (error) return showMsg($("#msg"), err(error));
+  showMsg($("#msg"), "");
+  $("#cContent").value = "";
+  $("#cLen").textContent = "0";
+  await loadComments(currentPostId);
+};
+
+$("#wContent").addEventListener("input", (e) => { $("#wLen").textContent = e.target.value.length; });
+$("#cContent").addEventListener("input", (e) => { $("#cLen").textContent = e.target.value.length; });
+$("#moreBtn").onclick = () => loadList(false);
+$("#q").addEventListener("input", () => {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(() => loadList(true), 300);
+});
+
+// ---------- 시작: 로그인한 사람만 입장 ----------
+(async () => {
+  if (AUTH_NOT_CONFIGURED) return location.replace(pageUrl("index.html"));
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) return location.replace(pageUrl("index.html"));
+  $("#app").hidden = false;
+  $("#logoutBtn").onclick = async () => {
+    await sb.auth.signOut();
+    location.replace(pageUrl("index.html"));
+  };
+  sb.auth.onAuthStateChange((event) => {
+    if (event === "SIGNED_OUT") location.replace(pageUrl("index.html"));
+  });
+  window.addEventListener("hashchange", route);
+  route();
+})();
+</script>
+</body>
+</html>
