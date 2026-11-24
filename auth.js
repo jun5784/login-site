@@ -36,8 +36,44 @@
     return m;
   };
 
-  // 로고: img/logo.png 파일이 있으면 그 파일을, 없으면 글자 로고를 보여 줍니다.
+  // 로고 찾기: 아래 이름 가운데 저장소에 있는 파일을 자동으로 찾아 씁니다.
+  // config.js에 window.LOGO_FILE = "img/내로고.png"; 처럼 적으면 그 파일을 가장 먼저 씁니다.
+  const LOGO_CANDIDATES = [
+    "img/logo.png", "img/logo.PNG", "img/logo.jpg", "img/logo.jpeg", "img/logo.JPG",
+    "img/logo.svg", "img/logo.webp",
+    "logo.png", "logo.PNG", "logo.jpg", "logo.jpeg", "logo.JPG", "logo.svg", "logo.webp"
+  ];
+  let logoPromise = null;
+  function findLogo() {
+    if (logoPromise) return logoPromise;
+    const list = (window.LOGO_FILE ? [window.LOGO_FILE] : []).concat(LOGO_CANDIDATES);
+    logoPromise = new Promise((resolve) => {
+      let i = 0;
+      const next = () => {
+        if (i >= list.length) { resolve(null); return; }
+        const src = list[i++];
+        const t = new Image();
+        t.onload = () => resolve(src);
+        t.onerror = next;
+        t.src = src;
+      };
+      next();
+    });
+    return logoPromise;
+  }
+  window.findLogo = findLogo;
+
+  // 배경 워터마크: 로고를 찾으면 페이지에 has-logo 표시를 붙이고 --logo-url 값을 넣습니다.
+  function applyLogoWatermark(src) {
+    if (!src) return;
+    const root = document.documentElement;
+    root.style.setProperty("--logo-url", 'url("' + encodeURI(src) + '")');
+    root.classList.add("has-logo");
+  }
+
+  // 상단 로고: 로고 파일이 있으면 그 파일을, 없으면 글자 로고를 보여 줍니다.
   function renderBrand() {
+    findLogo().then(applyLogoWatermark);
     document.querySelectorAll("[data-brand]").forEach((host) => {
       if (host.dataset.done) return;
       host.dataset.done = "1";
@@ -45,22 +81,23 @@
       a.className = "brand";
       a.href = host.getAttribute("data-brand") || "dashboard.html";
       a.setAttribute("aria-label", window.ORG_NAME + " " + window.SERVICE_NAME);
-      const img = new Image();
-      img.className = "brand-logo";
-      img.alt = window.ORG_NAME;
       const fb = document.createElement("span");
       fb.className = "brand-fallback";
-      fb.hidden = true;
       fb.innerHTML = '<span class="brand-mark" aria-hidden="true"></span><span class="brand-org">' + window.ORG_NAME + "</span>";
-      img.onerror = function () { img.remove(); fb.hidden = false; };
-      img.src = "img/logo.png";
       const svc = document.createElement("span");
       svc.className = "brand-svc";
       svc.textContent = window.SERVICE_NAME;
-      a.appendChild(img);
       a.appendChild(fb);
       a.appendChild(svc);
       host.appendChild(a);
+      findLogo().then((src) => {
+        if (!src) return;
+        const img = new Image();
+        img.className = "brand-logo";
+        img.alt = window.ORG_NAME;
+        img.src = src;
+        a.replaceChild(img, fb);
+      });
     });
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", renderBrand);

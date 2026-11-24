@@ -149,3 +149,18 @@ button,input,select,textarea{font:inherit;color:inherit}
 .strength{height:6px;border-radius:99px;background:#f0ede8;margin-top:8px;overflow:hidden}
 .strength i{display:block;height:100%;width:0;border-radius:99px;transition:width .25s,background .25s}
 @media(max-width:900px){.auth-wrap{grid-template-columns:1fr;gap:22px;padding:22px 16px}.auth-intro h1{font-size:27px;margin-top:20px}.auth-intro .pledge li span{display:none}.auth-card{padding:26px 20px}}
+
+/* ===== 의왕도시공사 로고 배경 워터마크 ===== */
+.logo-watermark{display:none;pointer-events:none;user-select:none}
+.has-logo .logo-watermark{display:block}
+/* 토론방: 대화 영역 가운데에 은은하게 (스크롤해도 제자리) */
+.logo-watermark.in-chat{position:absolute;inset:0;z-index:-1;
+  background:var(--logo-url) center 55% / min(62%,440px) auto no-repeat;opacity:.11}
+/* 로비·홈: 배경 그림 위 오른쪽 아래에 크게 */
+.logo-watermark.in-scene{position:absolute;right:4vw;bottom:5vh;z-index:1;width:min(42vw,520px);height:min(26vw,300px);
+  background:var(--logo-url) right bottom / contain no-repeat;opacity:.16}
+@media (max-width:760px){
+  .logo-watermark.in-chat{background-size:min(78%,300px) auto;opacity:.09}
+  .logo-watermark.in-scene{width:70vw;height:40vw;right:15vw;bottom:3vh;background-position:center bottom;opacity:.12}
+}
+@media print{.logo-watermark{display:none!important}}
