@@ -1,566 +1,595 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ko">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>혁신 토론 분석 대시보드</title>
-<link rel="stylesheet" href="forum.css">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<link rel="stylesheet" href="ui.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="config.js"></script>
 <script src="auth.js"></script>
 <script src="forum.js"></script>
 <script src="keywords.js"></script>
+<title>토론 분석 대시보드 | 의왕도시공사 익명 토론회</title>
 <style>
-.report-head{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;margin-bottom:12px}
-.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-.actions select{max-width:320px}
-.cards{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:12px}
-.card .label{font-size:12px;color:#6b7280}
-.card .value{font-size:26px;font-weight:700;margin-top:4px;font-variant-numeric:tabular-nums}
-.card .hint{font-size:12px;color:#6b7280;margin-top:2px}
-.grid2{display:grid;grid-template-columns:3fr 2fr;gap:12px;margin-bottom:12px}
-.grid2b{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
-.section{margin-bottom:12px}
-.chart-box{position:relative}
-.cloud{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;align-content:flex-start;min-height:200px;line-height:1.2}
-.cloud span{cursor:pointer;font-weight:700}
-.cloud span:hover{text-decoration:underline}
-.kw-table tbody tr{cursor:pointer}
-.kw-table tbody tr:hover{background:#f9fafb}
-.kw-table tbody tr.sel{background:#eff6ff}
-.kw-table th.sortable{cursor:pointer;user-select:none}
-.kw-table th.sortable.on{color:#1d4ed8}
-.mbar{display:inline-block;height:8px;background:#2563eb;border-radius:2px;vertical-align:middle;margin-right:6px}
-.op{display:grid;grid-template-columns:28px 1fr auto;gap:10px;padding:10px 0;border-bottom:1px solid #e5e7eb;font-size:14px}
-.op:last-child{border-bottom:0}
-.op .rank{color:#9ca3af;font-weight:700}
-.op .who{font-size:12px;color:#6b7280;margin-bottom:2px}
-.op .txt{white-space:pre-wrap;word-break:break-word}
-.op .rx{font-size:13px;white-space:nowrap;text-align:right}
-mark{background:#fef08a;padding:0 1px}
-.settings .grid{display:grid;grid-template-columns:1fr 1fr 200px;gap:12px}
-.settings textarea{width:100%;min-height:80px;resize:vertical}
-.note{font-size:12px;color:#6b7280;margin-top:8px;line-height:1.6}
-.empty{padding:40px;text-align:center;color:#6b7280}
-.sr-only{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip:rect(0,0,0,0)}
-@media(max-width:1000px){.cards{grid-template-columns:repeat(3,1fr)}.grid2,.grid2b,.settings .grid{grid-template-columns:1fr}}
-@media print{.topbar,.actions,.settings,#liveNote{display:none !important}body{background:#fff}.panel{break-inside:avoid}}
+.rhead{padding:26px 28px;display:flex;gap:20px;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;background:rgba(255,255,255,.95)}
+.rhead h1{font-size:26px;margin:10px 0 6px}
+.rhead p{margin:0;color:var(--sub)}
+.rhead .badges{display:flex;gap:6px;flex-wrap:wrap}
+.rhead .period{font-size:13px;color:var(--sub);margin-top:8px}
+.rhead .btns{display:flex;gap:8px;flex-wrap:wrap}
+.notice{margin-top:12px}
+.kpis{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-top:16px}
+.kpi{padding:16px 18px;background:rgba(255,255,255,.95)}
+.kpi .l{font-size:12.5px;color:var(--sub);font-weight:700}
+.kpi .v{font-size:25px;font-weight:800;letter-spacing:-.02em;margin:4px 0 2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.kpi .s{font-size:12px;color:var(--mute);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.kpi.hl{background:linear-gradient(160deg,#eef4fe,#fff)}
+.grid2{display:grid;grid-template-columns:1.15fr 1fr;gap:14px;margin-top:14px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:14px}
+.box{padding:20px 22px;background:rgba(255,255,255,.96);min-width:0}
+.box h3{font-size:16px;margin-bottom:2px;display:flex;align-items:center;gap:8px}
+.box h3 .tag{font-size:11px;font-weight:800;color:var(--pri-d);background:var(--pri-soft);padding:2px 8px;border-radius:999px}
+.box .cap{font-size:12.5px;color:var(--sub);margin:2px 0 14px}
+.hbar{display:grid;grid-template-columns:24px 96px 1fr 40px;gap:8px;align-items:center;font-size:13.5px;padding:3px 6px;border-radius:8px;cursor:pointer;border:0;background:none;width:100%;text-align:left}
+.hbar:hover{background:#faf8f4}
+.hbar .rk{font-size:11.5px;font-weight:800;color:var(--mute);text-align:center}
+.hbar .lb{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hbar .tr{height:10px;background:#f3efe8;border-radius:99px;overflow:hidden}
+.hbar .tr i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#b4cdf8,#5a8dee)}
+.hbar:nth-child(-n+3) .tr i{background:linear-gradient(90deg,#f7c39c,#f2914f)}
+.hbar .v{font-size:12.5px;color:var(--sub);text-align:right;font-variant-numeric:tabular-nums}
+.bars{display:grid;gap:3px}
+.cloud{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;justify-content:center;padding:10px 4px;min-height:200px}
+.cloud button{border:0;background:none;cursor:pointer;font-weight:800;line-height:1.2;padding:2px 4px;border-radius:8px;letter-spacing:-.02em}
+.cloud button:hover{background:#faf8f4}
+.donut-wrap{display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+.donut{width:150px;height:150px;border-radius:50%;position:relative;flex:none}
+.donut::after{content:"";position:absolute;inset:26px;border-radius:50%;background:#fff}
+.donut span{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:1;font-size:12px;color:var(--sub)}
+.donut span b{font-size:24px;color:var(--ink)}
+.legend{flex:1;min-width:160px;display:grid;gap:4px}
+.legend button{display:grid;grid-template-columns:12px 1fr auto;gap:8px;align-items:center;border:0;background:none;padding:4px 6px;border-radius:8px;font-size:13px;cursor:pointer;text-align:left}
+.legend button:hover{background:#faf8f4}
+.legend i{width:12px;height:12px;border-radius:4px}
+.legend em{font-style:normal;color:var(--sub);font-variant-numeric:tabular-nums}
+.emo-row{display:grid;grid-template-columns:26px 92px 1fr 54px;gap:8px;align-items:center;font-size:13px;padding:3px 0}
+.emo-row .e{font-size:18px}
+.emo-row .tr{height:10px;background:#f3efe8;border-radius:99px;overflow:hidden}
+.emo-row .tr i{display:block;height:100%;border-radius:99px}
+.emo-row .v{text-align:right;color:var(--sub);font-variant-numeric:tabular-nums}
+.tone{display:flex;height:12px;border-radius:99px;overflow:hidden;margin:6px 0 12px;background:#f3efe8}
+.tone i{display:block;height:100%}
+.tone-legend{display:flex;gap:12px;font-size:12px;color:var(--sub);margin-bottom:8px}
+.tone-legend b{color:var(--ink)}
+svg text{font-family:inherit}
+.va{margin-top:14px;padding:22px 24px;background:rgba(255,255,255,.96)}
+.va-steps{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:14px 0 18px}
+.va-steps .step{background:#fbf9f5}
+.ops{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.op{display:grid;grid-template-columns:30px 1fr auto;gap:12px;align-items:start;padding:14px 16px;border:1px solid var(--line);border-radius:16px;background:#fff}
+.op .rk{width:30px;height:30px;border-radius:50%;background:#f3efe8;font-weight:800;display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--sub)}
+.op:nth-child(-n+3) .rk{background:var(--peach);color:#fff}
+.op .meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12.5px;color:var(--sub)}
+.op .meta .ava{width:24px;height:24px;border-width:2px}
+.op p{margin:6px 0 4px;font-size:14.5px;word-break:break-word}
+.op .rx{font-size:12.5px;color:var(--sub)}
+.tbl-wrap{overflow:auto;margin-top:10px}
+.tbl input,.tbl select{padding:7px 10px;border:1.5px solid var(--line);border-radius:10px;background:#fdfcfa;font-size:13px;width:100%;min-width:90px}
+.tbl td.title{min-width:240px;max-width:420px}
+.settings{margin-top:14px;padding:18px 22px;background:rgba(255,255,255,.96)}
+.settings summary{cursor:pointer;font-weight:800}
+.settings .g{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+.settings textarea{width:100%;min-height:90px;padding:10px 12px;border:1.5px solid var(--line);border-radius:12px;background:#fdfcfa;font-size:13px}
+.modal-list{display:grid;gap:8px;margin-top:14px;max-height:60vh;overflow:auto}
+.modal-list .it{padding:10px 12px;background:#faf8f4;border-radius:12px;font-size:14px}
+.modal-list .it .mt{font-size:12px;color:var(--sub);margin-bottom:4px;display:flex;gap:6px;align-items:center}
+.modal-list mark{background:#fde7c8;border-radius:4px;padding:0 2px}
+.xbtn{float:right;border:0;background:#f3efe8;width:32px;height:32px;border-radius:50%;font-size:16px;cursor:pointer}
+@media(max-width:1100px){.kpis{grid-template-columns:repeat(3,1fr)}.grid3{grid-template-columns:1fr 1fr}}
+@media(max-width:800px){.grid2,.grid3{grid-template-columns:1fr}.va-steps{grid-template-columns:1fr 1fr}.settings .g{grid-template-columns:1fr}}
+@media(max-width:520px){.kpis{grid-template-columns:repeat(2,1fr)}.op{grid-template-columns:30px 1fr}.op .act{grid-column:2}}
+@media print{.topbar,.no-print,.bg-scene{display:none!important}body{background:#fff}.wrap{padding:0;max-width:none}.card{box-shadow:none;break-inside:avoid}.pulse-cta{animation:none}}
 </style>
 </head>
 <body>
+<div class="bg-scene light" style="background-image:url(img/bg/lobby.jpg)"></div>
 <header class="topbar">
-  <a class="brand" href="discussion.html">혁신 토론방</a>
-  <nav><a href="discussion.html">토론 목록</a><a href="#" id="roomLink">토론방으로</a><a href="#" id="logoutBtn">로그아웃</a></nav>
+  <div class="brand-host" data-brand="dashboard.html"></div>
+  <div class="sp"></div>
+  <nav class="nav"><a href="discussion.html">로비</a><a id="roomLink" href="#">토론방</a><a class="on" href="#">분석 대시보드</a><button id="logout" type="button">로그아웃</button></nav>
 </header>
 <main class="wrap">
-  <div class="report-head">
-    <div>
-      <h1>토론 분석 대시보드</h1>
-      <p class="sub" id="topicInfo"></p>
-    </div>
-    <div class="actions">
-      <select id="topicSel" aria-label="토론 선택"></select>
-      <button class="btn sm secondary" id="csvKw">키워드 CSV</button>
-      <button class="btn sm secondary" id="csvMsg">전체 의견 CSV</button>
-      <button class="btn sm secondary" id="printBtn">인쇄 / PDF</button>
-    </div>
-  </div>
-  <div id="fatal" class="msg error" hidden></div>
-  <div id="liveNote" class="msg warn" hidden>토론이 아직 진행 중입니다. 아래 결과는 새 의견과 반응에 따라 실시간으로 갱신됩니다.</div>
-
+  <div id="fail" class="card empty" hidden></div>
   <div id="content" hidden>
-    <section class="cards">
-      <div class="panel card"><div class="label">전체 의견</div><div class="value" id="kMsgs">0</div><div class="hint">숨긴 의견 제외</div></div>
-      <div class="panel card"><div class="label">참여자</div><div class="value" id="kPeople">0</div><div class="hint" id="kPer">-</div></div>
-      <div class="panel card"><div class="label">감정 반응</div><div class="value" id="kReacts">0</div><div class="hint" id="kPos">-</div></div>
-      <div class="panel card"><div class="label">고유 키워드</div><div class="value" id="kKw">0</div><div class="hint">2회 이상 언급 <span id="kKw2">0</span>개</div></div>
-      <div class="panel card"><div class="label">토론 시간</div><div class="value" id="kDur">-</div><div class="hint" id="kRange">-</div></div>
-      <div class="panel card"><div class="label">최다 키워드</div><div class="value" id="kTop" style="font-size:22px">-</div><div class="hint" id="kTopN">-</div></div>
+    <section class="card rhead">
+      <div style="min-width:0;flex:1">
+        <div class="badges" id="badges"></div>
+        <h1 id="title"></h1>
+        <p id="desc"></p>
+        <div class="period" id="period"></div>
+      </div>
+      <div class="btns no-print">
+        <button class="btn btn-ghost btn-sm" id="csvKw" type="button">⬇ 키워드 CSV</button>
+        <button class="btn btn-ghost btn-sm" id="csvOp" type="button">⬇ 전체 의견 CSV</button>
+        <button class="btn btn-soft btn-sm" id="print" type="button">🖨 PDF로 인쇄</button>
+      </div>
     </section>
+    <div id="liveNote" class="msg info notice" hidden>토론이 아직 진행 중입니다. 지금까지 모인 의견을 기준으로 분석했어요. <a href="#" id="reload">새로 고침</a></div>
+    <div class="anon-note notice"><span class="ic">🔒</span><div>이 대시보드에는 동물 닉네임과 집계 결과만 표시됩니다. 누가 어떤 의견을 썼는지는 관리자 화면에도 나타나지 않습니다.</div></div>
+
+    <section class="kpis" id="kpis"></section>
 
     <section class="grid2">
-      <div class="panel">
-        <h2>주요 키워드 TOP 20 (언급 빈도)</h2>
-        <div class="chart-box" style="height:440px"><canvas id="kwChart"></canvas></div>
-        <div class="sr-only"><table id="kwSr"></table></div>
-      </div>
-      <div class="panel">
-        <h2>키워드 클라우드</h2>
-        <div class="cloud" id="cloud"></div>
-        <p class="note">단어를 누르면 그 단어가 들어간 의견을 아래에서 볼 수 있습니다.</p>
-      </div>
+      <div class="card box"><h3>주요 키워드 TOP 20</h3><p class="cap">언급 횟수 기준 · 키워드를 누르면 관련 의견을 볼 수 있어요.</p><div id="kwBars" class="bars"></div></div>
+      <div class="card box"><h3>키워드 클라우드</h3><p class="cap">글자가 클수록 많이 언급된 단어예요.</p><div id="cloud" class="cloud"></div></div>
     </section>
 
-    <section class="grid2b">
-      <div class="panel">
-        <h2>시간대별 의견 수</h2>
-        <div class="chart-box" style="height:240px"><canvas id="timeChart"></canvas></div>
-        <div class="sr-only"><table id="timeSr"></table></div>
-      </div>
-      <div class="panel">
-        <h2>감정 반응 분포</h2>
-        <div class="chart-box" style="height:240px"><canvas id="reactChart"></canvas></div>
-        <div class="sr-only"><table id="reactSr"></table></div>
-      </div>
+    <section class="grid3">
+      <div class="card box"><h3>의견 자동 분류 <span class="tag">1단계</span></h3><p class="cap">6개 토론 테마로 자동 태깅 (키워드 규칙 기반)</p><div id="cats" class="donut-wrap"></div></div>
+      <div class="card box"><h3>시간대별 의견 흐름</h3><p class="cap" id="timeCap">의견이 언제 많이 올라왔는지 보여 줘요.</p><div id="time"></div></div>
+      <div class="card box"><h3>감정 반응 분포</h3><p class="cap">의견에 남겨진 감정 표시 합계</p><div id="emo"></div></div>
     </section>
 
-    <section class="panel section">
-      <h2>키워드 상세 (혁신 계획 반영용)</h2>
-      <div style="overflow-x:auto">
-        <table class="kw-table">
-          <thead><tr>
-            <th class="num">순위</th><th>키워드</th>
-            <th class="num sortable" data-sort="count">언급 수</th>
-            <th class="num sortable" data-sort="msgCount">언급 의견</th>
-            <th class="num sortable" data-sort="people">언급 참여자</th>
-            <th class="num sortable" data-sort="pos">긍정 반응</th>
-            <th class="num sortable" data-sort="neg">우려 반응</th>
-            <th class="num sortable" data-sort="score">참고 점수</th>
-          </tr></thead>
-          <tbody id="kwBody"></tbody>
-        </table>
+    <section class="card va">
+      <div class="section-title" style="margin:0"><h2>Voice → Action</h2><p>공감 TOP 10 의견을 혁신과제로 상정하고, 부서 검토와 실행 현황을 관리합니다.</p></div>
+      <div class="va-steps" id="vaSteps"></div>
+      <h3 style="font-size:16px;margin-bottom:4px">공감 TOP 10 의견 <span class="tag" style="font-size:11px;color:var(--pri-d);background:var(--pri-soft);padding:2px 8px;border-radius:999px">2단계</span></h3>
+      <p class="cap muted" style="font-size:12.5px;margin:2px 0 12px">공감 점수 = 긍정 반응(👍💡❤️👏) 수 + 답글 수</p>
+      <ul class="ops" id="tops"></ul>
+      <h3 style="font-size:16px;margin:24px 0 4px">혁신과제 진행 현황 <span style="font-size:11px;color:var(--pri-d);background:var(--pri-soft);padding:2px 8px;border-radius:999px">3·4단계</span></h3>
+      <p class="muted" style="font-size:12.5px;margin:2px 0 0" id="actCap">관련 부서의 실행가능성 검토 결과와 실행 상황을 기록합니다.</p>
+      <div id="addAct" class="no-print" hidden style="display:flex;gap:8px;margin-top:10px">
+        <input id="newAct" class="input" maxlength="300" placeholder="의견 외에 직접 추가할 혁신과제 (예: 결재 단계 3단계 → 2단계 축소)">
+        <button id="newActBtn" class="btn btn-soft" type="button">추가</button>
       </div>
-      <p class="note">긍정 반응은 👍 공감, 💡 좋은 아이디어, ❤️ 응원, 👏 박수를, 우려 반응은 🤔 생각해 볼 문제, 😢 아쉬움을 그 키워드가 들어간 의견에서 합한 값입니다.
-        참고 점수 = 언급 의견 수 + 언급 참여자 수 × 2 + 긍정 반응 수입니다. 여러 사람이 언급하고 공감을 많이 받은 주제일수록 높게 나오며, 우선순위를 정할 때 참고용으로만 쓰세요. 열 제목을 누르면 그 기준으로 정렬됩니다.</p>
+      <div class="tbl-wrap" id="acts"></div>
     </section>
 
-    <section class="panel section" id="kwDetail" hidden>
-      <h2 id="kwDetailTitle"></h2>
-      <div id="kwDetailList"></div>
+    <section class="card box" style="margin-top:14px">
+      <h3>키워드 상세표</h3>
+      <p class="cap">참고 점수 = 언급한 의견 수 + 언급한 참여자 수 × 2 + 긍정 반응 수 (우선순위 판단용 참고 지표)</p>
+      <div class="tbl-wrap" id="kwTable"></div>
     </section>
 
-    <section class="panel section">
-      <h2>공감을 많이 받은 의견 TOP 10</h2>
-      <div id="topOps"></div>
-    </section>
-
-    <section class="panel section settings">
-      <h2>분석 설정</h2>
-      <div class="grid">
-        <div>
-          <label for="stopText">추가로 제외할 단어 (쉼표 또는 줄바꿈으로 구분)</label>
-          <textarea id="stopText" placeholder="예: 팀장님, 부서, 일단"></textarea>
-        </div>
-        <div>
-          <label for="synText">같은 뜻으로 묶을 단어 (한 줄에 하나, 대표어: 동의어)</label>
-          <textarea id="synText" placeholder="AI: 인공지능, 에이아이&#10;디지털전환: DX, 디지털화"></textarea>
-        </div>
-        <div>
-          <label for="minLen">최소 글자 수</label>
-          <select id="minLen" style="width:100%"><option value="2">2글자 이상</option><option value="3">3글자 이상</option></select>
-          <label><input type="checkbox" id="exTitle" checked> 토론 주제의 단어 제외</label>
-          <button class="btn sm" id="applyBtn" style="margin-top:8px;width:100%">적용</button>
-        </div>
+    <details class="card settings no-print">
+      <summary>⚙ 분석 설정 (제외 단어 · 같은 뜻 단어 묶기)</summary>
+      <div class="g">
+        <label class="field" style="margin:0"><span>제외할 단어 (쉼표나 줄바꿈으로 구분)</span><textarea id="stopText" placeholder="예: 생각, 부분, 정도"></textarea></label>
+        <label class="field" style="margin:0"><span>같은 뜻 단어 묶기 (한 줄에 하나: 대표어: 동의어1, 동의어2)</span><textarea id="synonymText" placeholder="예: AI: 인공지능, 챗GPT&#10;결재: 결재라인, 전자결재"></textarea></label>
       </div>
-      <p class="note">조사(은/는/이/가 등)와 어미(합니다, 해야 등)를 떼고 기본형으로 세며, "그리고, 정말, 생각, 회사" 같은 일반적인 단어는 기본으로 제외합니다. 형태소 분석기가 아닌 규칙 기반 방식이라 일부 단어가 어색하게 잘릴 수 있으니, 그럴 때는 위 설정으로 보정하세요. 설정은 이 브라우저에 저장됩니다.</p>
-    </section>
+      <div style="display:flex;gap:8px;margin-top:12px"><button class="btn btn-pri btn-sm" id="applySet" type="button">적용</button><button class="btn btn-ghost btn-sm" id="resetSet" type="button">초기화</button><span class="muted" style="font-size:12px;align-self:center">설정은 이 브라우저에 저장되며 토론방 실시간 키워드에도 적용됩니다.</span></div>
+    </details>
   </div>
 </main>
+
+<div id="listModal" class="modal-back" hidden>
+  <div class="modal wide" role="dialog" aria-modal="true">
+    <button class="xbtn" id="listClose" type="button" aria-label="닫기">×</button>
+    <h2 id="listTitle" style="font-size:20px"></h2>
+    <p class="muted" id="listSub" style="margin:4px 0 0;font-size:13px"></p>
+    <div class="modal-list" id="listBody"></div>
+  </div>
+</div>
+
 <script>
 (async () => {
+  const $ = (id) => document.getElementById(id);
+  const esc = Forum.esc;
+  const topicId = Number(new URLSearchParams(location.search).get("id"));
+  if (!topicId) { location.replace(pageUrl("discussion.html")); return; }
   const session = await Forum.requireSession();
   if (!session) return;
-  Forum.bindLogout("logoutBtn");
-  const $ = (id) => document.getElementById(id);
-  const TONE = {};
-  Forum.REACTIONS.forEach((r) => { TONE[r.e] = r.tone; });
-  const BLUES = ["#1e3a8a", "#1d4ed8", "#2563eb", "#3b82f6", "#60a5fa", "#93c5fd"];
-  const SETTINGS_KEY = "forum-kw-settings";
+  Forum.bindLogout("logout");
+  $("roomLink").href = "room.html?id=" + topicId;
 
-  let topic = null, msgs = [], counts = [], result = null, channel = null;
-  let sortKey = "count", selectedKw = null, reloadTimer = null;
-  const charts = {};
+  let topic = null;
+  let msgs = [];
+  let counts = new Map();
+  let isAdmin = false;
+  let actions = [];
+  let actionsErr = "";
+  let A = null;
 
-  function fatal(text) { $("fatal").textContent = text; $("fatal").hidden = false; $("content").hidden = true; }
+  function fail(text) { $("fail").textContent = text; $("fail").hidden = false; $("content").hidden = true; }
 
-  // ---------- 설정 ----------
-  function loadSettings() {
-    try {
-      const s = JSON.parse(localStorage.getItem(SETTINGS_KEY) || "{}");
-      $("stopText").value = s.stopText || "";
-      $("synText").value = s.synText || "";
-      $("minLen").value = String(s.minLen || 2);
-      $("exTitle").checked = s.exTitle !== false;
-    } catch (e) { /* 무시 */ }
-  }
-  function saveSettings() {
-    localStorage.setItem(SETTINGS_KEY, JSON.stringify({
-      stopText: $("stopText").value, synText: $("synText").value,
-      minLen: Number($("minLen").value), exTitle: $("exTitle").checked
-    }));
-  }
-  loadSettings();
-  $("applyBtn").onclick = () => { saveSettings(); analyze(); render(); Forum.toast("분석 설정을 적용했습니다."); };
-
-  // ---------- 토론 목록 ----------
-  const list = await sb.from("topic_summary").select("id,title,live_status,created_at").order("created_at", { ascending: false });
-  if (list.error) { fatal(Forum.dbError(list.error)); return; }
-  if (!list.data.length) { fatal("아직 만들어진 토론이 없습니다. 토론 목록에서 토론을 먼저 만들어 주세요."); return; }
-  $("topicSel").innerHTML = list.data.map((t) =>
-    `<option value="${t.id}">${t.live_status === "open" ? "[진행 중] " : ""}${Forum.esc(t.title)}</option>`).join("");
-  let currentId = Number(new URLSearchParams(location.search).get("id")) || list.data[0].id;
-  if (!list.data.some((t) => t.id === currentId)) currentId = list.data[0].id;
-  $("topicSel").value = String(currentId);
-  $("topicSel").onchange = () => {
-    currentId = Number($("topicSel").value);
-    history.replaceState(null, "", "?id=" + currentId);
-    selectedKw = null;
-    loadTopic();
-  };
-
-  // ---------- 데이터 ----------
-  async function fetchData() {
-    const [t, ms, rc] = await Promise.all([
-      sb.from("topics").select("*").eq("id", currentId).maybeSingle(),
-      Forum.fetchAll(() => sb.from("messages").select("*").eq("topic_id", currentId).order("id")),
-      Forum.fetchAll(() => sb.from("reaction_counts").select("message_id,emoji,cnt").eq("topic_id", currentId).order("message_id"))
+  async function loadData() {
+    const [t, ms, rc, adm] = await Promise.all([
+      sb.from("topic_summary").select("*").eq("id", topicId).maybeSingle(),
+      Forum.fetchAll(() => sb.from("messages").select("*").eq("topic_id", topicId).order("id", { ascending: true })),
+      Forum.fetchAll(() => sb.from("reaction_counts").select("message_id,emoji,cnt").eq("topic_id", topicId).order("message_id")),
+      sb.rpc("is_admin")
     ]);
     if (t.error) throw t.error;
-    if (!t.data) throw new Error("토론을 찾을 수 없습니다.");
+    if (adm.error) throw adm.error;
+    if (!t.data) return false;
     topic = t.data;
-    msgs = ms;
-    counts = rc;
+    isAdmin = adm.data === true;
+    msgs = ms.filter((m) => !m.hidden);
+    counts = new Map();
+    rc.forEach((r) => {
+      const c = counts.get(r.message_id) || {};
+      c[r.emoji] = r.cnt;
+      counts.set(r.message_id, c);
+    });
+    return true;
+  }
+  async function loadActions() {
+    const { data, error } = await sb.from("action_items").select("*").eq("topic_id", topicId).order("id");
+    actions = error ? [] : (data || []);
+    actionsErr = error ? Forum.dbError(error) : "";
   }
 
-  async function loadTopic() {
-    try {
-      await fetchData();
-    } catch (e) {
-      fatal(Forum.dbError(e));
-      return;
-    }
-    $("fatal").hidden = true;
-    $("content").hidden = false;
-    $("roomLink").href = "room.html?id=" + currentId;
-    analyze();
-    render();
-    subscribe();
-  }
-
-  function subscribe() {
-    if (channel) sb.removeChannel(channel);
-    const filter = "topic_id=eq." + currentId;
-    const schedule = () => {
-      clearTimeout(reloadTimer);
-      reloadTimer = setTimeout(async () => {
-        try { await fetchData(); analyze(); render(); } catch (e) { /* 다음 갱신 때 다시 시도 */ }
-      }, 2000);
-    };
-    channel = sb.channel("report-" + currentId)
-      .on("postgres_changes", { event: "*", schema: "public", table: "messages", filter: filter }, schedule)
-      .on("postgres_changes", { event: "*", schema: "public", table: "reaction_counts", filter: filter }, schedule)
-      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "topics", filter: "id=eq." + currentId }, schedule)
-      .subscribe();
-  }
+  try {
+    const ok = await loadData();
+    if (!ok) { fail("토론을 찾을 수 없습니다."); return; }
+    await loadActions();
+  } catch (e) { fail(Forum.dbError(e)); return; }
+  $("content").hidden = false;
 
   // ---------- 분석 ----------
   function analyze() {
-    const visible = msgs.filter((m) => !m.hidden);
-    const rx = new Map();
-    const emojiTotals = {};
-    const visibleIds = new Set(visible.map((m) => m.id));
-    counts.forEach((r) => {
-      if (!visibleIds.has(r.message_id) || !r.cnt) return;
-      const o = rx.get(r.message_id) || { pos: 0, neg: 0, neu: 0, total: 0, by: {} };
-      const tone = TONE[r.emoji] || "neu";
-      o[tone] += r.cnt;
-      o.total += r.cnt;
-      o.by[r.emoji] = r.cnt;
-      rx.set(r.message_id, o);
-      emojiTotals[r.emoji] = (emojiTotals[r.emoji] || 0) + r.cnt;
-    });
-    const extraStop = $("exTitle").checked ? Keywords.extract(topic.title) : [];
-    const opts = Keywords.buildOptions({
-      stopText: $("stopText").value, synonymText: $("synText").value,
-      minLen: Number($("minLen").value), extraStop: extraStop
+    const opts = Keywords.buildOptions(Forum.loadKwSettings());
+    const replies = new Map();
+    msgs.forEach((m) => { if (m.reply_to) replies.set(m.reply_to, (replies.get(m.reply_to) || 0) + 1); });
+    const items = msgs.map((m) => {
+      const c = counts.get(m.id) || {};
+      let pos = 0, neg = 0, neu = 0;
+      Forum.REACTIONS.forEach((r) => {
+        const n = c[r.e] || 0;
+        if (r.tone === "pos") pos += n; else if (r.tone === "neg") neg += n; else neu += n;
+      });
+      const words = Keywords.extract(m.content, opts);
+      return { m, c, pos, neg, neu, total: pos + neg + neu, replies: replies.get(m.id) || 0, words, wordSet: new Set(words), cat: Forum.tagCategory(m.content) };
     });
     const kw = new Map();
-    const msgKw = new Map();
-    visible.forEach((m) => {
-      const words = Keywords.extract(m.content, opts);
-      msgKw.set(m.id, Array.from(new Set(words)));
-      words.forEach((w) => {
-        if (!kw.has(w)) kw.set(w, { word: w, count: 0, ids: new Set(), aliases: new Set(), pos: 0, neg: 0 });
-        kw.get(w).count++;
+    items.forEach((it) => {
+      it.words.forEach((w) => {
+        const k = kw.get(w) || { w: w, mentions: 0, msgs: new Set(), aliases: new Set(), pos: 0, neg: 0 };
+        k.mentions++;
+        kw.set(w, k);
       });
-      new Set(words).forEach((w) => {
-        const e = kw.get(w);
-        e.ids.add(m.id);
-        e.aliases.add(m.alias_no);
-        const r = rx.get(m.id);
-        if (r) { e.pos += r.pos; e.neg += r.neg; }
+      it.wordSet.forEach((w) => {
+        const k = kw.get(w);
+        k.msgs.add(it.m.id);
+        k.aliases.add(it.m.alias_no);
+        k.pos += it.pos;
+        k.neg += it.neg;
       });
     });
-    const kwList = Array.from(kw.values()).map((e) => ({
-      word: e.word, count: e.count, msgCount: e.ids.size, people: e.aliases.size,
-      pos: e.pos, neg: e.neg, score: e.ids.size + e.aliases.size * 2 + e.pos, ids: e.ids
-    }));
-    kwList.sort((a, b) => b.count - a.count || b.people - a.people || a.word.localeCompare(b.word, "ko"));
-    result = { visible, rx, emojiTotals, kwList, msgKw };
+    const kwList = Array.from(kw.values()).map((k) => ({
+      w: k.w, mentions: k.mentions, msgCount: k.msgs.size, aliasCount: k.aliases.size, pos: k.pos, neg: k.neg,
+      score: k.msgs.size + k.aliases.size * 2 + k.pos
+    })).sort((a, b) => b.mentions - a.mentions || b.score - a.score || a.w.localeCompare(b.w));
+    const emo = {};
+    Forum.REACTIONS.forEach((r) => { emo[r.e] = 0; });
+    items.forEach((it) => Forum.REACTIONS.forEach((r) => { emo[r.e] += it.c[r.e] || 0; }));
+    const cats = {};
+    Forum.CATEGORIES.concat([Forum.ETC]).forEach((c) => { cats[c.name] = 0; });
+    items.forEach((it) => { cats[it.cat] = (cats[it.cat] || 0) + 1; });
+    const top = items.slice().sort((a, b) =>
+      (b.pos + b.replies) - (a.pos + a.replies) || b.total - a.total || a.m.id - b.m.id
+    ).slice(0, 10);
+    return { items, kwList, emo, cats, top };
   }
 
-  function sorted() {
-    const l = result.kwList.slice();
-    l.sort((a, b) => b[sortKey] - a[sortKey] || b.count - a.count || a.word.localeCompare(b.word, "ko"));
-    return l;
+  function renderAll() {
+    A = analyze();
+    renderHeader();
+    renderKpis();
+    renderKeywords();
+    renderCats();
+    renderTime();
+    renderEmo();
+    renderVA();
+    renderKwTable();
   }
 
-  // ---------- 화면 ----------
-  function fmtDur(ms) {
-    const m = Math.round(ms / 60000);
-    if (m < 60) return m + "분";
-    const h = Math.floor(m / 60);
-    if (h < 48) return h + "시간 " + (m % 60) + "분";
-    return Math.round(h / 24) + "일";
+  function periodEnd() {
+    if (topic.closed_at) return new Date(topic.closed_at);
+    if (topic.ends_at && new Date(topic.ends_at) < new Date()) return new Date(topic.ends_at);
+    return new Date();
   }
 
-  function render() {
-    const { visible, rx, emojiTotals, kwList } = result;
+  function renderHeader() {
+    const c = Forum.category(topic.category);
     const live = Forum.isLive(topic);
+    $("badges").innerHTML = `<span class="badge cat" style="background:${c.color}1f;color:${c.color}">${c.icon} ${esc(c.name)}</span>` +
+      (live ? '<span class="badge live"><i></i>진행 중</span>' : '<span class="badge done">종료</span>') +
+      '<span class="badge round">토론 분석 대시보드</span>';
+    $("title").textContent = topic.title;
+    $("desc").textContent = topic.description || "";
+    $("desc").hidden = !topic.description;
+    $("period").textContent = "🗓️ " + Forum.fmtDateTime(topic.created_at) + " ~ " + (live ? "진행 중" : Forum.fmtDateTime(periodEnd()));
     $("liveNote").hidden = !live;
-    $("topicInfo").textContent = (live ? "진행 중 · " : "종료 · ") + topic.title;
+    document.title = topic.title + " | 토론 분석 대시보드";
+  }
 
-    // 지표 카드
-    const people = new Set(visible.map((m) => m.alias_no)).size;
-    let pos = 0, neg = 0, neu = 0;
-    rx.forEach((o) => { pos += o.pos; neg += o.neg; neu += o.neu; });
-    const total = pos + neg + neu;
-    $("kMsgs").textContent = visible.length;
-    $("kPeople").textContent = people;
-    $("kPer").textContent = people ? "1인당 평균 " + (visible.length / people).toFixed(1) + "개" : "-";
-    $("kReacts").textContent = total;
-    $("kPos").textContent = total ? "긍정 " + Math.round((pos / total) * 100) + "% · 우려 " + Math.round((neg / total) * 100) + "%" : "-";
-    $("kKw").textContent = kwList.length;
-    $("kKw2").textContent = kwList.filter((k) => k.count >= 2).length;
-    if (visible.length) {
-      const first = new Date(visible[0].created_at), last = new Date(visible[visible.length - 1].created_at);
-      $("kDur").textContent = fmtDur(last - first);
-      $("kRange").textContent = Forum.fmtDateTime(first) + " ~ " + Forum.fmtTime(last);
-    } else {
-      $("kDur").textContent = "-";
-      $("kRange").textContent = "의견 없음";
+  function renderKpis() {
+    const items = A.items;
+    const people = new Set(items.map((it) => it.m.alias_no)).size;
+    const totalR = Object.values(A.emo).reduce((s, n) => s + n, 0);
+    const pos = items.reduce((s, it) => s + it.pos, 0);
+    const neg = items.reduce((s, it) => s + it.neg, 0);
+    const pct = (n) => totalR ? Math.round(n / totalR * 100) : 0;
+    const topKw = A.kwList[0];
+    const cards = [
+      ["의견", items.length + "건", "숨긴 의견 제외", false],
+      ["참여자", people + "명", "의견을 남긴 익명 참여자 (입장 " + (topic.participant_count || 0) + "명)", false],
+      ["감정 반응", totalR + "개", "긍정 " + pct(pos) + "% · 우려 " + pct(neg) + "%", false],
+      ["최다 키워드", topKw ? topKw.w : "-", topKw ? topKw.mentions + "회 언급 · 의견 " + topKw.msgCount + "건" : "의견 없음", true],
+      ["고유 키워드", A.kwList.length + "개", "추출된 서로 다른 단어 수", false],
+      ["토론 시간", Forum.fmtDuration(periodEnd() - new Date(topic.created_at)), Forum.isLive(topic) ? "현재까지" : "시작부터 종료까지", false]
+    ];
+    $("kpis").innerHTML = cards.map((c) =>
+      `<div class="card kpi ${c[3] ? "hl" : ""}"><div class="l">${c[0]}</div><div class="v" title="${esc(c[1])}">${esc(c[1])}</div><div class="s" title="${esc(c[2])}">${esc(c[2])}</div></div>`
+    ).join("");
+  }
+
+  function renderKeywords() {
+    const top = A.kwList.slice(0, 20);
+    const max = top.length ? top[0].mentions : 1;
+    $("kwBars").innerHTML = top.length ? top.map((k, i) =>
+      `<button type="button" class="hbar" data-kw="${esc(k.w)}"><span class="rk">${i + 1}</span><span class="lb" title="${esc(k.w)}">${esc(k.w)}</span><span class="tr"><i style="width:${Math.max(4, Math.round(k.mentions / max * 100))}%"></i></span><span class="v">${k.mentions}회</span></button>`
+    ).join("") : '<div class="empty">아직 분석할 의견이 없어요.</div>';
+    const cl = A.kwList.slice(0, 40);
+    const cmax = cl.length ? cl[0].mentions : 1;
+    const cmin = cl.length ? cl[cl.length - 1].mentions : 1;
+    const palette = ["#3f73d8", "#4fae8f", "#e2783a", "#8a6bd1", "#d0607e", "#2b8fa3", "#b38a1f"];
+    $("cloud").innerHTML = cl.length ? cl.slice().sort((a, b) => a.w.localeCompare(b.w)).map((k, i) => {
+      const r = cmax === cmin ? 0.5 : (k.mentions - cmin) / (cmax - cmin);
+      return `<button type="button" data-kw="${esc(k.w)}" style="font-size:${Math.round(13 + r * 26)}px;color:${palette[i % palette.length]};opacity:${(0.65 + r * 0.35).toFixed(2)}" title="${k.mentions}회">${esc(k.w)}</button>`;
+    }).join("") : '<div class="empty">아직 분석할 의견이 없어요.</div>';
+  }
+
+  function renderCats() {
+    const total = A.items.length;
+    const list = Forum.CATEGORIES.concat([Forum.ETC]).map((c) => ({ c: c, n: A.cats[c.name] || 0 })).filter((x) => x.n > 0 || x.c !== Forum.ETC);
+    let acc = 0;
+    const segs = total ? list.filter((x) => x.n > 0).map((x) => {
+      const a = acc / total * 360;
+      acc += x.n;
+      const b = acc / total * 360;
+      return `${x.c.color} ${a.toFixed(2)}deg ${b.toFixed(2)}deg`;
+    }).join(",") : "#f0ede8 0deg 360deg";
+    $("cats").innerHTML = `<div class="donut" style="background:conic-gradient(${segs})"><span><b>${total}</b>건</span></div>
+      <div class="legend">${list.map((x) =>
+        `<button type="button" data-cat="${esc(x.c.name)}"><i style="background:${x.c.color}"></i><span>${x.c.icon} ${esc(x.c.name)}</span><em>${x.n}건 · ${total ? Math.round(x.n / total * 100) : 0}%</em></button>`
+      ).join("")}</div>`;
+  }
+
+  function renderTime() {
+    const ts = A.items.map((it) => new Date(it.m.created_at).getTime());
+    if (!ts.length) { $("time").innerHTML = '<div class="empty">아직 의견이 없어요.</div>'; return; }
+    const min = ts.reduce((a, b) => Math.min(a, b), Infinity);
+    const max = ts.reduce((a, b) => Math.max(a, b), -Infinity);
+    const span = Math.max(max - min, 60000);
+    const steps = [60e3, 2 * 60e3, 5 * 60e3, 10 * 60e3, 15 * 60e3, 30 * 60e3, 3600e3, 3 * 3600e3, 6 * 3600e3, 12 * 3600e3, 86400e3];
+    const step = steps.find((s) => span / s <= 12) || 86400e3;
+    const start = Math.floor(min / step) * step;
+    const n = Math.floor((max - start) / step) + 1;
+    const b = new Array(n).fill(0);
+    ts.forEach((t) => { b[Math.floor((t - start) / step)]++; });
+    const mx = Math.max.apply(null, b);
+    const W = 320, H = 170, pl = 6, pb = 24, pt = 16;
+    const bw = (W - pl * 2) / n;
+    const lab = (t) => {
+      const d = new Date(t);
+      return step >= 86400e3 ? (d.getMonth() + 1) + "/" + d.getDate()
+        : String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0");
+    };
+    const every = Math.ceil(n / 6);
+    let svg = `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="시간대별 의견 수">`;
+    b.forEach((v, i) => {
+      const h = mx ? (v / mx) * (H - pb - pt) : 0;
+      const x = pl + i * bw + bw * 0.15;
+      const y = H - pb - h;
+      svg += `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${(bw * 0.7).toFixed(1)}" height="${Math.max(h, v ? 2 : 0).toFixed(1)}" rx="4" fill="#8fb3f3"><title>${lab(start + i * step)} · ${v}건</title></rect>`;
+      if (v && v === mx) svg += `<text x="${(x + bw * 0.35).toFixed(1)}" y="${(y - 4).toFixed(1)}" font-size="10" text-anchor="middle" fill="#3f73d8" font-weight="700">${v}</text>`;
+      if (i % every === 0) svg += `<text x="${(x + bw * 0.35).toFixed(1)}" y="${H - 6}" font-size="10" text-anchor="middle" fill="#9aa0a6">${lab(start + i * step)}</text>`;
+    });
+    svg += `<line x1="${pl}" y1="${H - pb}" x2="${W - pl}" y2="${H - pb}" stroke="#ebe5dc"/></svg>`;
+    $("time").innerHTML = svg;
+    const stepLabel = step >= 86400e3 ? "1일" : step >= 3600e3 ? (step / 3600e3) + "시간" : (step / 60e3) + "분";
+    $("timeCap").textContent = stepLabel + " 단위 의견 수 · 가장 활발한 구간 " + lab(start + b.indexOf(mx) * step);
+  }
+
+  function renderEmo() {
+    const total = Object.values(A.emo).reduce((s, n) => s + n, 0);
+    const tone = { pos: 0, neu: 0, neg: 0 };
+    Forum.REACTIONS.forEach((r) => { tone[r.tone] += A.emo[r.e]; });
+    const col = { pos: "#4fae8f", neu: "#8fb3f3", neg: "#f2914f" };
+    const pct = (n) => total ? Math.round(n / total * 100) : 0;
+    const max = Math.max(1, Math.max.apply(null, Object.values(A.emo)));
+    $("emo").innerHTML = `<div class="tone-legend"><span>긍정 <b>${pct(tone.pos)}%</b></span><span>중립 <b>${pct(tone.neu)}%</b></span><span>우려 <b>${pct(tone.neg)}%</b></span></div>
+      <div class="tone">${total ? ["pos", "neu", "neg"].map((k) => `<i style="width:${tone[k] / total * 100}%;background:${col[k]}"></i>`).join("") : ""}</div>
+      ${Forum.REACTIONS.map((r) =>
+        `<div class="emo-row"><span class="e">${r.e}</span><span>${esc(r.label)}</span><span class="tr"><i style="width:${A.emo[r.e] / max * 100}%;background:${col[r.tone]}"></i></span><span class="v">${A.emo[r.e]} · ${pct(A.emo[r.e])}%</span></div>`
+      ).join("")}`;
+  }
+
+  function renderVA() {
+    const byMsg = new Map(actions.filter((a) => a.message_id).map((a) => [a.message_id, a]));
+    const cnt = (ks) => actions.filter((x) => ks.includes(x.stage)).length;
+    $("vaSteps").innerHTML = [
+      ["1단계", "의견 자동 분류", A.items.length, "의견 " + A.items.length + "건 태깅 완료"],
+      ["2단계", "혁신과제 상정", actions.length, "TOP 10 의견 중 상정"],
+      ["3단계", "부서 검토", cnt(["상정", "검토"]), "실행가능성 검토 대기·진행"],
+      ["4단계", "실행·공유", cnt(["채택", "실행", "완료"]), "완료 " + cnt(["완료"]) + "건 · 보류 " + cnt(["보류"]) + "건"]
+    ].map((s) => `<div class="step"><span class="no">${s[0]}</span><b class="cnt">${s[2]}</b><h4>${s[1]}</h4><p>${s[3]}</p></div>`).join("");
+
+    $("tops").innerHTML = A.top.length ? A.top.map((it, i) => {
+      const m = it.m;
+      const c = Forum.category(it.cat);
+      const act = byMsg.get(m.id);
+      const rx = Forum.REACTIONS.filter((r) => it.c[r.e] > 0).map((r) => r.e + " " + it.c[r.e]).join("  ");
+      let right = "";
+      if (act) right = Forum.stageBadge(act.stage);
+      else if (isAdmin) right = `<button class="btn btn-sm btn-soft no-print" type="button" data-propose="${m.id}">혁신과제로 상정</button>`;
+      return `<li class="op"><span class="rk">${i + 1}</span>
+        <div style="min-width:0">
+          <div class="meta">${Forum.avatarHtml(m.alias_no, "ava")}<span>${esc(Forum.aliasName(m.alias_no))}</span><span class="badge cat" style="background:${c.color}1f;color:${c.color}">${c.icon} ${esc(c.name)}</span><span>공감 점수 <b style="color:var(--ink)">${it.pos + it.replies}</b></span></div>
+          <p>${esc(m.content)}</p>
+          <div class="rx">${rx || "반응 없음"}${it.replies ? " · 답글 " + it.replies : ""}</div>
+        </div>
+        <div class="act">${right}</div></li>`;
+    }).join("") : '<li class="empty">아직 의견이 없어요.</li>';
+
+    $("addAct").hidden = !isAdmin;
+    $("actCap").textContent = actionsErr ? actionsErr
+      : isAdmin ? "단계·담당 부서·메모를 바꾼 뒤 [저장]을 누르세요. 변경 내용은 로비의 현황판에 바로 공유됩니다."
+      : "관련 부서의 실행가능성 검토 결과와 실행 상황이 이곳에 공유됩니다.";
+    if (!actions.length) { $("acts").innerHTML = '<div class="empty">아직 상정된 혁신과제가 없어요.</div>'; return; }
+    const stageOpts = (cur) => Forum.STAGES.map((s) => `<option value="${s.k}" ${s.k === cur ? "selected" : ""}>${s.k} · ${esc(s.desc)}</option>`).join("");
+    $("acts").innerHTML = `<table class="tbl"><thead><tr><th>혁신과제</th><th>테마</th><th>단계</th><th>담당 부서</th><th>검토 의견·메모</th>${isAdmin ? '<th class="no-print"></th>' : ""}</tr></thead><tbody>${
+      actions.map((a) => {
+        const c = Forum.category(a.category);
+        if (!isAdmin) {
+          return `<tr><td class="title">${esc(a.title)}</td><td>${c.icon} ${esc(c.name)}</td><td>${Forum.stageBadge(a.stage)}</td><td>${esc(a.dept || "-")}</td><td>${esc(a.note || "-")}</td></tr>`;
+        }
+        return `<tr data-aid="${a.id}"><td class="title">${esc(a.title)}</td><td>${c.icon} ${esc(c.name)}</td>
+          <td><select data-f="stage">${stageOpts(a.stage)}</select></td>
+          <td><input data-f="dept" maxlength="60" value="${esc(a.dept)}" placeholder="예: 인사노무팀"></td>
+          <td><input data-f="note" maxlength="500" value="${esc(a.note)}" placeholder="검토 결과, 일정 등"></td>
+          <td class="no-print" style="white-space:nowrap"><button class="btn btn-sm btn-pri" type="button" data-save="${a.id}">저장</button> <button class="btn btn-sm btn-ghost" type="button" data-remove="${a.id}">삭제</button></td></tr>`;
+      }).join("")
+    }</tbody></table>`;
+  }
+
+  function renderKwTable() {
+    const list = A.kwList.slice(0, 50);
+    $("kwTable").innerHTML = list.length ? `<table class="tbl"><thead><tr><th class="num">순위</th><th>키워드</th><th class="num">언급 수</th><th class="num">언급 의견</th><th class="num">언급 참여자</th><th class="num">긍정 반응</th><th class="num">우려 반응</th><th class="num">참고 점수</th></tr></thead><tbody>${
+      list.map((k, i) => `<tr class="click" data-kw="${esc(k.w)}"><td class="num">${i + 1}</td><td><b>${esc(k.w)}</b></td><td class="num">${k.mentions}</td><td class="num">${k.msgCount}</td><td class="num">${k.aliasCount}</td><td class="num">${k.pos}</td><td class="num">${k.neg}</td><td class="num"><b>${k.score}</b></td></tr>`).join("")
+    }</tbody></table>` : '<div class="empty">아직 분석할 의견이 없어요.</div>';
+  }
+
+  // ---------- 의견 모아 보기 ----------
+  function escRe(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); }
+  function openList(title, sub, list, hl) {
+    $("listTitle").textContent = title;
+    $("listSub").textContent = sub;
+    $("listBody").innerHTML = list.length ? list.map((it) => {
+      let body = esc(it.m.content);
+      if (hl) body = body.replace(new RegExp(escRe(esc(hl)), "gi"), (x) => "<mark>" + x + "</mark>");
+      return `<div class="it"><div class="mt">${Forum.avatarHtml(it.m.alias_no, "ava")}${esc(Forum.aliasName(it.m.alias_no))} · ${Forum.fmtTime(it.m.created_at)} · 긍정 ${it.pos} · 우려 ${it.neg}</div>${body}</div>`;
+    }).join("") : '<div class="empty">해당하는 의견이 없어요.</div>';
+    $("listModal").querySelectorAll(".mt .ava").forEach((x) => { x.style.width = "22px"; x.style.height = "22px"; x.style.borderWidth = "2px"; });
+    $("listModal").hidden = false;
+  }
+  document.addEventListener("click", (e) => {
+    const k = e.target.closest("[data-kw]");
+    if (k) {
+      const w = k.dataset.kw;
+      const list = A.items.filter((it) => it.wordSet.has(w));
+      openList("‘" + w + "’ 관련 의견", list.length + "건", list, w);
+      return;
     }
-    $("kTop").textContent = kwList.length ? kwList[0].word : "-";
-    $("kTopN").textContent = kwList.length ? kwList[0].count + "회 언급 · " + kwList[0].people + "명" : "-";
-
-    renderKwChart(kwList.slice(0, 20));
-    renderCloud(kwList.slice(0, 40));
-    renderTimeChart(visible);
-    renderReactChart(emojiTotals);
-    renderTable();
-    renderDetail();
-    renderTopOps(visible, rx);
-  }
-
-  function makeChart(id, config) {
-    if (typeof Chart === "undefined") return;
-    if (charts[id]) charts[id].destroy();
-    charts[id] = new Chart($(id), config);
-  }
-
-  function renderKwChart(top) {
-    $("kwSr").innerHTML = "<tr><th>키워드</th><th>언급 수</th></tr>" +
-      top.map((k) => `<tr><td>${Forum.esc(k.word)}</td><td>${k.count}</td></tr>`).join("");
-    makeChart("kwChart", {
-      type: "bar",
-      data: {
-        labels: top.map((k) => k.word),
-        datasets: [{
-          label: "언급 수",
-          data: top.map((k) => k.count),
-          backgroundColor: "#2563eb",
-          borderRadius: 2
-        }]
-      },
-      options: {
-        indexAxis: "y",
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: { legend: { display: false } },
-        scales: {
-          x: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: "#f3f4f6" } },
-          y: { grid: { display: false } }
-        },
-        onClick: (evt, els) => {
-          if (els.length) selectKw(top[els[0].index].word);
-        }
-      }
-    });
-  }
-
-  function renderCloud(top) {
-    if (!top.length) { $("cloud").innerHTML = '<p class="muted">아직 분석할 의견이 없습니다.</p>'; return; }
-    const max = top[0].count, min = top[top.length - 1].count;
-    const shuffled = top.slice().sort((a, b) => a.word.localeCompare(b.word, "ko"));
-    $("cloud").innerHTML = shuffled.map((k) => {
-      const ratio = max === min ? 1 : (k.count - min) / (max - min);
-      const size = Math.round(13 + ratio * 27);
-      const rank = top.indexOf(k);
-      const color = BLUES[Math.min(BLUES.length - 1, Math.floor(rank / 7))];
-      return `<span data-kw="${Forum.esc(k.word)}" style="font-size:${size}px;color:${color}" title="${k.count}회">${Forum.esc(k.word)}</span>`;
-    }).join("");
-  }
-  $("cloud").addEventListener("click", (e) => {
-    const s = e.target.closest("[data-kw]");
-    if (s) selectKw(s.dataset.kw);
-  });
-
-  function renderTimeChart(visible) {
-    let labels = [], data = [];
-    if (visible.length) {
-      const start = new Date(visible[0].created_at).getTime();
-      const end = new Date(visible[visible.length - 1].created_at).getTime();
-      const span = Math.max(end - start, 60000);
-      const steps = [1, 5, 10, 15, 30, 60, 180, 360, 1440];
-      let step = steps[steps.length - 1];
-      for (const s of steps) { if (span / (s * 60000) <= 30) { step = s; break; } }
-      const size = step * 60000;
-      const base = Math.floor(start / size) * size;
-      const n = Math.floor((end - base) / size) + 1;
-      data = new Array(n).fill(0);
-      visible.forEach((m) => { data[Math.floor((new Date(m.created_at).getTime() - base) / size)]++; });
-      const multiDay = span > 86400000;
-      labels = data.map((_, i) => {
-        const d = new Date(base + i * size);
-        const hm = String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0");
-        return multiDay ? (d.getMonth() + 1) + "/" + d.getDate() + " " + hm : hm;
-      });
+    const c = e.target.closest("[data-cat]");
+    if (c) {
+      const list = A.items.filter((it) => it.cat === c.dataset.cat);
+      openList(Forum.category(c.dataset.cat).icon + " " + c.dataset.cat + " 의견", list.length + "건 · 자동 분류 결과", list, null);
     }
-    $("timeSr").innerHTML = "<tr><th>시각</th><th>의견 수</th></tr>" +
-      labels.map((l, i) => `<tr><td>${l}</td><td>${data[i]}</td></tr>`).join("");
-    makeChart("timeChart", {
-      type: "bar",
-      data: { labels: labels, datasets: [{ label: "의견 수", data: data, backgroundColor: "#3b82f6", borderRadius: 2 }] },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: { legend: { display: false } },
-        scales: {
-          y: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: "#f3f4f6" } },
-          x: { grid: { display: false } }
-        }
-      }
-    });
-  }
-
-  function renderReactChart(totals) {
-    const rs = Forum.REACTIONS;
-    const colors = rs.map((r) => (r.tone === "pos" ? "#2563eb" : r.tone === "neg" ? "#d97706" : "#9ca3af"));
-    $("reactSr").innerHTML = "<tr><th>반응</th><th>개수</th></tr>" +
-      rs.map((r) => `<tr><td>${r.e} ${r.label}</td><td>${totals[r.e] || 0}</td></tr>`).join("");
-    makeChart("reactChart", {
-      type: "bar",
-      data: {
-        labels: rs.map((r) => r.e + " " + r.label),
-        datasets: [{ label: "반응 수", data: rs.map((r) => totals[r.e] || 0), backgroundColor: colors, borderRadius: 2 }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: { legend: { display: false } },
-        scales: {
-          y: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: "#f3f4f6" } },
-          x: { grid: { display: false } }
-        }
-      }
-    });
-  }
-
-  function renderTable() {
-    document.querySelectorAll(".kw-table th.sortable").forEach((th) => th.classList.toggle("on", th.dataset.sort === sortKey));
-    const l = sorted().slice(0, 50);
-    if (!l.length) { $("kwBody").innerHTML = '<tr><td colspan="8" class="muted">아직 분석할 의견이 없습니다.</td></tr>'; return; }
-    const max = Math.max(...l.map((k) => k[sortKey]), 1);
-    $("kwBody").innerHTML = l.map((k, i) => `<tr data-kw="${Forum.esc(k.word)}" class="${k.word === selectedKw ? "sel" : ""}">
-      <td class="num">${i + 1}</td>
-      <td><span class="mbar" style="width:${Math.max(2, Math.round((k[sortKey] / max) * 60))}px"></span><b>${Forum.esc(k.word)}</b></td>
-      <td class="num">${k.count}</td><td class="num">${k.msgCount}</td><td class="num">${k.people}</td>
-      <td class="num">${k.pos}</td><td class="num">${k.neg}</td><td class="num">${k.score}</td></tr>`).join("");
-  }
-  document.querySelectorAll(".kw-table th.sortable").forEach((th) => {
-    th.onclick = () => { sortKey = th.dataset.sort; renderTable(); };
   });
-  $("kwBody").addEventListener("click", (e) => {
-    const tr = e.target.closest("[data-kw]");
-    if (tr) selectKw(tr.dataset.kw);
+  $("listClose").onclick = () => { $("listModal").hidden = true; };
+  $("listModal").addEventListener("click", (e) => { if (e.target === $("listModal")) $("listModal").hidden = true; });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") $("listModal").hidden = true; });
+
+  // ---------- 혁신과제 관리 (관리자) ----------
+  $("tops").addEventListener("click", async (e) => {
+    const b = e.target.closest("[data-propose]");
+    if (!b) return;
+    const id = Number(b.dataset.propose);
+    const it = A.items.find((x) => x.m.id === id);
+    if (!it) return;
+    b.disabled = true;
+    const { error } = await sb.from("action_items").insert({ topic_id: topicId, message_id: id, title: it.m.content.slice(0, 300), category: it.cat });
+    if (error) { b.disabled = false; Forum.toast(/duplicate|unique/i.test(error.message) ? "이미 상정된 의견입니다." : Forum.dbError(error)); return; }
+    Forum.toast("혁신과제로 상정했어요.");
+    await loadActions();
+    renderVA();
   });
-
-  function selectKw(word) {
-    selectedKw = word;
-    renderTable();
-    renderDetail();
-    $("kwDetail").scrollIntoView({ behavior: "smooth", block: "start" });
-  }
-
-  function rxText(o) {
-    if (!o) return '<span class="muted">반응 없음</span>';
-    return Forum.REACTIONS.filter((r) => o.by[r.e]).map((r) => r.e + " " + o.by[r.e]).join("&nbsp; ");
-  }
-
-  function renderDetail() {
-    const k = selectedKw && result.kwList.find((x) => x.word === selectedKw);
-    if (!k) { $("kwDetail").hidden = true; return; }
-    $("kwDetail").hidden = false;
-    $("kwDetailTitle").textContent = `"${k.word}"이(가) 들어간 의견 ${k.msgCount}개 (참여자 ${k.people}명)`;
-    const items = result.visible.filter((m) => k.ids.has(m.id));
-    $("kwDetailList").innerHTML = items.map((m, i) => `<div class="op">
-      <span class="rank">${i + 1}</span>
-      <div><div class="who">${Forum.esc(Forum.aliasName(m.alias_no))} · ${Forum.fmtDateTime(m.created_at)}</div>
-      <div class="txt">${Forum.esc(m.content)}</div></div>
-      <div class="rx">${rxText(result.rx.get(m.id))}</div></div>`).join("");
-  }
-
-  function renderTopOps(visible, rx) {
-    const l = visible.filter((m) => rx.has(m.id))
-      .sort((a, b) => rx.get(b.id).pos - rx.get(a.id).pos || rx.get(b.id).total - rx.get(a.id).total || a.id - b.id)
-      .slice(0, 10);
-    if (!l.length) { $("topOps").innerHTML = '<p class="muted">아직 반응을 받은 의견이 없습니다.</p>'; return; }
-    $("topOps").innerHTML = l.map((m, i) => {
-      const kws = (result.msgKw.get(m.id) || []).slice(0, 5).map((w) => "#" + Forum.esc(w)).join(" ");
-      return `<div class="op"><span class="rank">${i + 1}</span>
-        <div><div class="who">${Forum.esc(Forum.aliasName(m.alias_no))} · ${Forum.fmtDateTime(m.created_at)}${kws ? " · " + kws : ""}</div>
-        <div class="txt">${Forum.esc(m.content)}</div></div>
-        <div class="rx">${rxText(rx.get(m.id))}<div class="muted" style="font-size:12px">긍정 ${rx.get(m.id).pos} · 우려 ${rx.get(m.id).neg}</div></div></div>`;
-    }).join("");
-  }
+  $("acts").addEventListener("click", async (e) => {
+    const s = e.target.closest("[data-save]");
+    const r = e.target.closest("[data-remove]");
+    if (s) {
+      const tr = s.closest("tr");
+      const v = (f) => tr.querySelector(`[data-f="${f}"]`).value.trim();
+      s.disabled = true;
+      const { error } = await sb.from("action_items").update({ stage: v("stage"), dept: v("dept"), note: v("note") }).eq("id", Number(s.dataset.save));
+      s.disabled = false;
+      if (error) { Forum.toast(Forum.dbError(error)); return; }
+      Forum.toast("저장했어요. 로비 현황판에도 반영됩니다.");
+      await loadActions();
+      renderVA();
+    } else if (r) {
+      if (!confirm("이 혁신과제를 목록에서 삭제할까요?")) return;
+      const { error } = await sb.from("action_items").delete().eq("id", Number(r.dataset.remove));
+      if (error) { Forum.toast(Forum.dbError(error)); return; }
+      await loadActions();
+      renderVA();
+    }
+  });
+  $("newActBtn").onclick = async () => {
+    const title = $("newAct").value.trim();
+    if (!title) return;
+    const { error } = await sb.from("action_items").insert({ topic_id: topicId, title: title, category: Forum.tagCategory(title) });
+    if (error) { Forum.toast(Forum.dbError(error)); return; }
+    $("newAct").value = "";
+    await loadActions();
+    renderVA();
+  };
 
   // ---------- 내보내기 ----------
-  function csvCell(v) {
-    const s = String(v == null ? "" : v);
-    return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
-  }
-  function download(name, rows) {
-    const csv = "\uFEFF" + rows.map((r) => r.map(csvCell).join(",")).join("\r\n");
+  function downloadCsv(name, rows) {
+    const csv = "\ufeff" + rows.map((r) => r.map((v) => {
+      const s = String(v == null ? "" : v);
+      return /[",\n\r]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+    }).join(",")).join("\r\n");
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
     a.download = name;
     document.body.appendChild(a);
     a.click();
-    setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+    setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 800);
   }
-  function safeName() { return (topic.title || "토론").replace(/[\\/:*?"<>|\s]+/g, "_").slice(0, 40); }
+  const fileBase = () => "토론분석_" + topicId + "_" + String(topic.title).replace(/[\\/:*?"<>|\s]+/g, "_").slice(0, 30);
   $("csvKw").onclick = () => {
-    if (!result) return;
     const rows = [["순위", "키워드", "언급 수", "언급 의견 수", "언급 참여자 수", "긍정 반응", "우려 반응", "참고 점수"]];
-    sorted().forEach((k, i) => rows.push([i + 1, k.word, k.count, k.msgCount, k.people, k.pos, k.neg, k.score]));
-    download("키워드분석_" + safeName() + ".csv", rows);
+    A.kwList.forEach((k, i) => rows.push([i + 1, k.w, k.mentions, k.msgCount, k.aliasCount, k.pos, k.neg, k.score]));
+    downloadCsv(fileBase() + "_키워드.csv", rows);
   };
-  $("csvMsg").onclick = () => {
-    if (!result) return;
-    const head = ["번호", "작성자(익명)", "작성 시각", "내용"].concat(Forum.REACTIONS.map((r) => r.e + " " + r.label), ["긍정 합계", "우려 합계", "키워드"]);
+  $("csvOp").onclick = () => {
+    const head = ["번호", "작성 시각", "익명 닉네임", "자동 분류", "내용", "답글 대상 번호"].concat(Forum.REACTIONS.map((r) => r.e + " " + r.label), ["긍정 합계", "우려 합계", "답글 수"]);
     const rows = [head];
-    result.visible.forEach((m, i) => {
-      const o = result.rx.get(m.id) || { by: {}, pos: 0, neg: 0 };
-      rows.push([i + 1, Forum.aliasName(m.alias_no), new Date(m.created_at).toLocaleString("ko-KR"), m.content]
-        .concat(Forum.REACTIONS.map((r) => o.by[r.e] || 0), [o.pos, o.neg, (result.msgKw.get(m.id) || []).join(" ")]));
-    });
-    download("전체의견_" + safeName() + ".csv", rows);
+    A.items.forEach((it) => rows.push([it.m.id, new Date(it.m.created_at).toLocaleString("ko-KR"), Forum.aliasName(it.m.alias_no), it.cat, it.m.content, it.m.reply_to || ""]
+      .concat(Forum.REACTIONS.map((r) => it.c[r.e] || 0), [it.pos, it.neg, it.replies])));
+    downloadCsv(fileBase() + "_전체의견.csv", rows);
   };
-  $("printBtn").onclick = () => window.print();
+  $("print").onclick = () => window.print();
+  $("reload").onclick = async (e) => {
+    e.preventDefault();
+    try { await loadData(); await loadActions(); renderAll(); Forum.toast("최신 내용으로 다시 분석했어요."); }
+    catch (err) { Forum.toast(Forum.dbError(err)); }
+  };
 
-  await loadTopic();
+  // ---------- 분석 설정 ----------
+  const st = Forum.loadKwSettings();
+  $("stopText").value = st.stopText || "";
+  $("synonymText").value = st.synonymText || "";
+  $("applySet").onclick = () => {
+    localStorage.setItem("kwSettings", JSON.stringify({ stopText: $("stopText").value, synonymText: $("synonymText").value }));
+    renderAll();
+    Forum.toast("분석 설정을 적용했어요.");
+  };
+  $("resetSet").onclick = () => {
+    localStorage.removeItem("kwSettings");
+    $("stopText").value = "";
+    $("synonymText").value = "";
+    renderAll();
+  };
+
+  renderAll();
 })();
 </script>
 </body>

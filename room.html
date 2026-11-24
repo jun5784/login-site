@@ -1,368 +1,274 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ko">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>혁신 토론방 - 실시간 토론</title>
-<link rel="stylesheet" href="forum.css">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<link rel="stylesheet" href="ui.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="config.js"></script>
 <script src="auth.js"></script>
 <script src="forum.js"></script>
 <script src="keywords.js"></script>
+<script src="profanity.js"></script>
+<title>토론방 | 의왕도시공사 익명 토론회</title>
 <style>
-body{height:100vh;overflow:hidden;display:flex;flex-direction:column}
-.room{flex:1;display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:16px;width:100%;max-width:1280px;margin:0 auto;padding:16px;min-height:0}
-.chat{display:flex;flex-direction:column;min-height:0;padding:0;position:relative}
-.room-head{padding:14px 16px;border-bottom:1px solid #e5e7eb}
-.room-head h1{font-size:18px;display:inline;margin-left:6px;vertical-align:middle;line-height:1.5}
-.room-head .desc{font-size:13px;color:#4b5563;margin-top:6px;white-space:pre-wrap;word-break:break-word;max-height:60px;overflow:auto}
-.meta-line{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13px;color:#6b7280;margin-top:8px;align-items:center}
-.meta-line b{color:#111827}
-.dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#16a34a;margin-right:4px}
-.dot.off{background:#dc2626}
-.admin-bar{margin-top:10px;display:flex;gap:8px}
-.msgs{flex:1;overflow-y:auto;padding:16px;background:#f9fafb;min-height:0}
-.empty{text-align:center;color:#9ca3af;padding:60px 0;font-size:14px}
-.row{display:flex;gap:10px;margin-bottom:14px;align-items:flex-start}
-.row.mine{flex-direction:row-reverse}
-.row .body{max-width:75%;min-width:0;display:flex;flex-direction:column;align-items:flex-start}
-.row.mine .body{align-items:flex-end}
-.meta{font-size:12px;color:#6b7280;margin-bottom:4px;display:flex;gap:6px}
-.meta .name{font-weight:700}
-.bubble{background:#fff;border:1px solid #e5e7eb;border-radius:4px 12px 12px 12px;padding:9px 12px;font-size:15px;line-height:1.5;white-space:pre-wrap;word-break:break-word;max-width:100%}
-.row.mine .bubble{background:#2563eb;color:#fff;border-color:#2563eb;border-radius:12px 4px 12px 12px}
-.bubble.hidden-msg,.row.mine .bubble.hidden-msg{background:#f3f4f6;color:#9ca3af;font-style:italic;border:1px dashed #d1d5db}
-.row.flash .bubble{outline:3px solid #f59e0b}
-.quote{font-size:12px;color:#4b5563;background:#eef2ff;border-left:3px solid #6366f1;padding:4px 8px;border-radius:4px;margin-bottom:4px;cursor:pointer;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.reacts{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px;align-items:center}
-.row.mine .reacts{justify-content:flex-end}
-.chip{border:1px solid #e5e7eb;background:#fff;border-radius:12px;padding:2px 8px;font-size:13px;cursor:pointer;font-family:inherit}
-.chip b{font-weight:600;margin-left:2px}
-.chip.on{background:#eff6ff;border-color:#2563eb;color:#1d4ed8}
+.room-body{height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidden}
+.room{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:18px;width:100%;max-width:1320px;margin:0 auto;padding:18px}
+.chat{display:flex;flex-direction:column;min-height:0;position:relative;overflow:hidden;background:rgba(255,255,255,.93);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.room-head{padding:18px 22px 14px;border-bottom:1px solid var(--line)}
+.room-head .row1{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.room-head h1{font-size:21px;margin:10px 0 2px}
+.room-head p{margin:0;color:var(--sub);font-size:14px}
+.timer{font-size:13px;color:var(--sub);font-weight:600}
+.online{font-size:13px;color:var(--sub);display:flex;align-items:center;gap:6px}
+.dot{width:8px;height:8px;border-radius:50%;background:#3bb98e;display:inline-block}
+.dot.off{background:#e0607a}
+.sp{flex:1}
+.admin-bar{display:flex;gap:8px;align-items:center;margin-top:10px;font-size:12px;color:var(--sub)}
+.anon-ribbon{display:flex;align-items:center;gap:10px;margin:12px 18px 0;padding:10px 14px;border-radius:14px;background:var(--anon-soft);color:#4b3fa6;font-size:13px}
+.anon-ribbon button{margin-left:auto;border:0;background:none;font-size:18px;color:#8a80c9;cursor:pointer;line-height:1}
+.closed-banner{display:flex;align-items:center;gap:14px;justify-content:space-between;margin:12px 18px 0;padding:14px 16px;border-radius:16px;background:var(--peach-soft);flex-wrap:wrap}
+.closed-banner b{display:block}
+.closed-banner span{font-size:13px;color:#8a5a33}
+.msgs{flex:1;min-height:0;overflow-y:auto;padding:18px 22px 30px;display:flex;flex-direction:column;gap:14px}
+.row{display:flex;gap:10px;align-items:flex-start;max-width:82%;animation:rise .25s ease}
+@keyframes rise{from{opacity:0;transform:translateY(6px)}}
+.row .col{min-width:0;display:flex;flex-direction:column;align-items:flex-start;position:relative}
+.row.mine{margin-left:auto;flex-direction:row-reverse}
+.row.mine .col{align-items:flex-end}
+.who{display:flex;align-items:center;gap:6px;font-size:12.5px;margin-bottom:4px}
+.who time{color:var(--mute);font-size:11.5px}
+.me{font-size:11px;background:var(--pri-soft);color:var(--pri-d);padding:1px 7px;border-radius:999px;font-weight:700}
+.bubble{background:#f6f3ee;padding:10px 14px;border-radius:4px 18px 18px 18px;font-size:14.5px;word-break:break-word;line-height:1.55}
+.row.mine .bubble{background:var(--pri);color:#fff;border-radius:18px 4px 18px 18px}
+.row.is-hidden .bubble{background:#f2f2f2;color:var(--mute);font-style:italic}
+.quote{font-size:12px;color:var(--sub);background:rgba(90,141,238,.08);border-left:3px solid var(--pri);padding:4px 10px;border-radius:8px;margin-bottom:4px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.reacts{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px}
+.reacts:empty{display:none}
+.chip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:2px 9px;font-size:13px;cursor:pointer;transition:background .15s,border-color .15s}
+.chip b{font-size:12px;color:var(--sub);margin-left:2px}
+.chip.on{background:var(--pri-soft);border-color:#c5d7fa}
 .chip:disabled{cursor:default}
-.tool{border:0;background:none;color:#9ca3af;font-size:12px;cursor:pointer;padding:2px 4px;font-family:inherit}
-.tool:hover{color:#2563eb}.tool.danger:hover{color:#dc2626}
-.react-picker{display:flex;flex-wrap:wrap;gap:2px;background:#fff;border:1px solid #d1d5db;border-radius:8px;padding:6px;margin-top:4px}
-.react-picker button{border:0;background:none;font-size:20px;cursor:pointer;padding:4px 6px;border-radius:6px;display:flex;flex-direction:column;align-items:center;min-width:52px;font-family:inherit}
-.react-picker button span{font-size:10px;color:#6b7280;margin-top:2px}
-.react-picker button:hover{background:#f3f4f6}
-.new-btn{position:absolute;left:50%;transform:translateX(-50%);bottom:84px;background:#111827;color:#fff;border:0;border-radius:16px;padding:6px 14px;font-size:13px;cursor:pointer;z-index:4}
-.reply-box{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 12px;background:#eef2ff;font-size:13px;color:#3730a3;border-top:1px solid #e5e7eb}
+.tools{display:flex;gap:2px;margin-top:3px;opacity:0;transition:opacity .15s}
+.row:hover .tools,.row:focus-within .tools{opacity:1}
+@media(hover:none){.tools{opacity:1}}
+.tool{border:0;background:none;color:var(--sub);font-size:12px;padding:3px 8px;border-radius:8px;cursor:pointer}
+.tool:hover{background:#f3efe8}
+.tool.danger{color:var(--rose)}
+.react-picker{position:absolute;top:100%;left:0;z-index:10;margin-top:4px;background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:var(--sh);padding:8px;display:grid;grid-template-columns:repeat(4,1fr);gap:4px;width:288px}
+.row.mine .react-picker{left:auto;right:0}
+.react-picker button{border:0;background:none;border-radius:10px;padding:6px 2px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px}
+.react-picker button:hover{background:#f6f3ee}
+.react-picker span{font-size:22px;line-height:1.2}
+.react-picker small{font-size:10.5px;color:var(--sub)}
+.welcome-empty{margin:auto;text-align:center;color:var(--sub);padding:30px}
+.welcome-empty .big{font-size:40px}
+.new-pill{position:absolute;left:50%;transform:translateX(-50%);bottom:140px;border:0;background:var(--pri);color:#fff;padding:8px 16px;border-radius:999px;font-weight:700;box-shadow:var(--sh);cursor:pointer;z-index:5}
+.composer{border-top:1px solid var(--line);padding:12px 18px;background:rgba(255,255,255,.97)}
+.reply-box{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:12.5px;color:var(--pri-d);background:var(--pri-soft);padding:6px 12px;border-radius:10px;margin-bottom:8px}
 .reply-box span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.reply-box button{border:0;background:none;font-size:16px;cursor:pointer;color:#4b5563}
-.composer{display:flex;gap:8px;padding:12px;border-top:1px solid #e5e7eb;align-items:flex-end;position:relative;background:#fff;border-radius:0 0 8px 8px}
-.composer textarea{flex:1;resize:none;height:42px;max-height:120px;line-height:1.4}
-.icon-btn{border:1px solid #d1d5db;background:#fff;border-radius:8px;width:42px;height:42px;font-size:20px;cursor:pointer;flex:none}
-.count{position:absolute;right:110px;bottom:2px;font-size:11px;color:#9ca3af}
-.picker{position:absolute;bottom:62px;left:12px;background:#fff;border:1px solid #d1d5db;border-radius:8px;padding:8px;display:grid;grid-template-columns:repeat(9,36px);gap:2px;z-index:6}
-.picker button{border:0;background:none;font-size:20px;width:36px;height:36px;cursor:pointer;border-radius:6px}
-.picker button:hover{background:#f3f4f6}
-.closed-note{padding:18px 14px;border-top:1px solid #e5e7eb;text-align:center;font-size:14px;color:#4b5563;background:#fff;border-radius:0 0 8px 8px}
-.side{display:flex;flex-direction:column;gap:12px;min-height:0;overflow-y:auto}
-.kw{list-style:none}
-.kw li{display:grid;grid-template-columns:20px 1fr 36px;gap:6px;align-items:center;font-size:13px;margin-bottom:6px}
-.kw .rank{color:#9ca3af;font-size:12px}
-.kw .bar{height:18px;background:#dbeafe;border-radius:3px;position:relative;overflow:hidden}
-.kw .bar i{position:absolute;left:0;top:0;bottom:0;background:#2563eb;opacity:.85}
-.kw .bar span{position:relative;padding-left:6px;line-height:18px;font-weight:600;color:#111827;white-space:nowrap}
-.kw .n{text-align:right;color:#4b5563;font-variant-numeric:tabular-nums}
-.rs{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
-.rs div{border:1px solid #e5e7eb;border-radius:6px;text-align:center;padding:6px 0;font-size:18px}
-.rs div small{display:block;font-size:12px;color:#4b5563;font-weight:600}
-.guide{font-size:13px;color:#4b5563;line-height:1.7;padding-left:16px}
-.fatal{margin:40px auto;max-width:520px}
-@media(max-width:900px){
-  body{height:auto;overflow:auto}
-  .room{grid-template-columns:1fr;padding:8px}
-  .chat{height:calc(100vh - 72px)}
-  .row .body{max-width:85%}
+.reply-box button{border:0;background:none;font-size:16px;cursor:pointer;color:var(--pri-d)}
+.warn-line{font-size:13px;color:#b23a52;background:var(--rose-soft);padding:7px 12px;border-radius:10px;margin-bottom:8px}
+.compose-row{display:flex;gap:8px;align-items:flex-end}
+.compose-row textarea{flex:1;resize:none;border:1.5px solid var(--line);border-radius:16px;padding:11px 14px;max-height:140px;outline:none;background:#fdfcfa;line-height:1.5;min-height:46px}
+.compose-row textarea:focus{border-color:var(--pri);box-shadow:0 0 0 4px rgba(90,141,238,.14);background:#fff}
+.compose-row textarea.bad{border-color:var(--rose);box-shadow:0 0 0 4px rgba(224,96,122,.12)}
+.compose-row .btn{height:46px}
+.icon-btn{width:46px;height:46px;border-radius:14px;border:1.5px solid var(--line);background:#fff;font-size:20px;cursor:pointer}
+.icon-btn:hover{background:#faf8f4}
+.emoji-wrap{position:relative}
+.emoji-pop{position:absolute;bottom:54px;left:0;z-index:20;background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:var(--sh);padding:8px;display:grid;grid-template-columns:repeat(8,1fr);gap:2px;width:310px}
+.emoji-pop button{border:0;background:none;font-size:20px;padding:4px;border-radius:8px;cursor:pointer}
+.emoji-pop button:hover{background:#f6f3ee}
+.compose-foot{display:flex;justify-content:space-between;gap:10px;font-size:12px;color:var(--mute);margin-top:6px}
+.compose-foot .as{color:#5546b8;display:flex;align-items:center;gap:6px}
+.compose-foot .as img{width:18px;height:18px;border-radius:50%;object-fit:cover}
+.closed-cta{border-top:1px solid var(--line);padding:22px;text-align:center;background:var(--peach-soft)}
+.closed-cta p{margin:0 0 12px;color:#8a5a33;font-weight:600}
+.side{display:flex;flex-direction:column;gap:14px;min-height:0;overflow-y:auto}
+.panel{padding:18px;background:rgba(255,255,255,.93);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.panel h3{font-size:15px;margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.panel h3 small{font-size:11px;color:var(--pri-d);background:var(--pri-soft);padding:2px 8px;border-radius:999px}
+.kw{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.kw li{display:grid;grid-template-columns:22px 86px 1fr 26px;align-items:center;gap:8px;font-size:13.5px}
+.kw .rk{width:22px;height:22px;border-radius:50%;background:#f3efe8;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;color:var(--sub)}
+.kw li:nth-child(-n+3) .rk{background:var(--pri);color:#fff}
+.kw .w{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.kw .bar{height:8px;background:#f3efe8;border-radius:99px;overflow:hidden}
+.kw .bar i{display:block;height:100%;background:linear-gradient(90deg,#a9c6f7,#5a8dee);border-radius:99px;transition:width .4s}
+.kw .n{font-size:11.5px;color:var(--mute);text-align:right}
+.kw li.none{display:block;color:var(--mute);font-size:13px}
+.emo{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.emo li{text-align:center;padding:8px 4px;border-radius:12px;background:#faf8f4}
+.emo .e{font-size:20px;display:block;line-height:1.3}
+.emo b{font-size:14px}
+.emo small{display:block;font-size:10.5px;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.etiquette ul{margin:0;padding:0;list-style:none;display:grid;gap:8px;font-size:13px;color:#4b5158}
+.intro-ava{width:116px;height:116px;border-radius:50%;object-fit:cover;border:6px solid var(--anon-soft);margin-bottom:12px}
+.modal h2{font-size:22px;margin:0 0 6px}
+.modal .anon-name{color:var(--anon)}
+.modal ul{list-style:none;padding:0;margin:16px 0 20px;text-align:left;display:grid;gap:8px}
+.modal li{background:#faf8f4;border-radius:12px;padding:10px 14px;font-size:13.5px}
+.modal .big-emoji{font-size:46px;line-height:1}
+.modal .stack{display:grid;gap:8px;margin-top:18px}
+@media(max-width:960px){
+  .room-body{height:auto;overflow:auto}
+  .room{grid-template-columns:1fr;padding:10px}
+  .chat{height:calc(100dvh - 120px);min-height:520px}
+  .row{max-width:94%}
+  .side{overflow:visible}
+  #meChip .lbl{display:none}
 }
 </style>
 </head>
-<body class="bg-room">
+<body class="room-body">
+<div class="bg-scene" style="background-image:url(img/bg/room.jpg)"></div>
 <header class="topbar">
-  <a class="brand" href="discussion.html">혁신 토론방</a>
-  <nav><a href="discussion.html">토론 목록</a><a href="#" id="reportLink">분석 대시보드</a><a href="#" id="logoutBtn">로그아웃</a></nav>
+  <div class="brand-host" data-brand="discussion.html"></div>
+  <div class="sp"></div>
+  <span id="meChip" class="anon-chip" title="토론방에는 이 닉네임만 표시됩니다"><span class="lock">🔒</span><span class="lbl">익명 보호 중</span></span>
+  <nav class="nav">
+    <a href="discussion.html">로비</a>
+    <a id="reportLink" href="#">분석 대시보드</a>
+    <button id="logout" type="button">로그아웃</button>
+  </nav>
 </header>
-<div id="fatal" class="msg error fatal" hidden></div>
-<div class="end-modal" id="endModal" hidden role="dialog" aria-modal="true" aria-labelledby="endTitle">
-  <div class="box">
-    <div class="ico">🏁</div>
-    <h3 id="endTitle">토론이 종료되었습니다</h3>
-    <p>참여해 주셔서 감사합니다.<br>지금 바로 주요 키워드 빈도와 감정 반응 분석 결과를 확인할 수 있습니다.</p>
-    <a class="btn cta lg pulse" href="#" id="endModalGo">📊 분석 대시보드로 이동 →</a>
-    <button type="button" class="later" id="endModalLater">닫고 대화 내용 계속 보기</button>
-  </div>
-</div>
-<main class="room" id="room" hidden>
-  <section class="panel chat">
+
+<div id="fatal" class="wrap" hidden><div class="card" style="padding:28px"><p id="fatalText" style="margin-top:0"></p><a class="btn btn-ghost" href="discussion.html">로비로 돌아가기</a></div></div>
+
+<main id="room" class="room" hidden>
+  <section class="chat card">
     <div class="room-head">
-      <span class="badge" id="status"></span><h1 id="title"></h1>
-      <p class="desc" id="desc" hidden></p>
-      <div class="meta-line">
-        <span><span class="dot" id="connDot"></span><span id="online">연결 중</span></span>
-        <span>의견 <b id="cntMsg">0</b></span>
-        <span>참여자 <b id="cntPeople">0</b></span>
-        <span id="timer"></span>
-        <span>내 이름 <b id="me"></b></span>
+      <div class="row1">
+        <span id="cat" class="badge cat"></span>
+        <span id="status" class="badge"></span>
+        <span id="timer" class="timer"></span>
+        <span class="sp"></span>
+        <span class="online"><i id="connDot" class="dot off"></i><span id="online">연결 중…</span></span>
       </div>
-      <div class="admin-bar" id="adminBar" hidden>
-        <button class="btn sm secondary" id="toggleStatus"></button>
+      <h1 id="title"></h1>
+      <p id="desc"></p>
+      <div id="adminBar" class="admin-bar" hidden>
+        <span>관리자</span>
+        <button id="btnClose" class="btn btn-sm btn-danger" type="button">토론 종료하기</button>
+        <button id="btnReopen" class="btn btn-sm btn-soft" type="button">토론 다시 열기</button>
       </div>
     </div>
-    <div class="msgs" id="msgs"><div class="empty" id="empty">아직 의견이 없습니다. 첫 의견을 남겨 보세요.</div></div>
-    <button class="new-btn" id="newBtn" hidden>새 의견 보기 ↓</button>
-    <div class="reply-box" id="replyBox" hidden><span id="replyText"></span><button id="replyCancel" title="답글 취소">×</button></div>
-    <form class="composer" id="composer">
-      <button type="button" class="icon-btn" id="emojiBtn" title="이모티콘 넣기">😊</button>
-      <div class="picker" id="emojiPicker" hidden></div>
-      <textarea id="input" maxlength="500" placeholder="의견을 입력하세요 (Enter 보내기, Shift+Enter 줄바꿈)"></textarea>
-      <span class="count" id="charCount">0/500</span>
-      <button class="btn" id="sendBtn" style="height:42px">보내기</button>
-    </form>
-    <div class="closed-note" id="closedNote" hidden>
-      <div style="font-size:15px;font-weight:700;color:#111827;margin-bottom:4px">토론이 종료되었습니다</div>
-      <div style="font-size:13px;color:#6b7280;margin-bottom:12px">모든 의견의 주요 키워드와 감정 반응을 분석한 결과를 확인하세요.</div>
-      <a class="btn cta lg pulse" href="#" id="closedReport">📊 분석 대시보드 보기 →</a>
+    <div id="closedBanner" class="closed-banner" hidden>
+      <div><b>🎉 토론이 종료되었습니다.</b><span>함께 나눈 의견의 키워드와 감정을 대시보드에서 확인해 보세요.</span></div>
+      <a id="bannerCta" class="btn btn-peach pulse-cta" href="#">📊 분석 대시보드로 이동 →</a>
+    </div>
+    <div id="anonRibbon" class="anon-ribbon">
+      <span>🔒</span>
+      <span>이 방에서는 모두 <b>동물 닉네임</b>으로만 이야기해요. 이름·이메일·부서는 의견과 분리 보관되어 다른 참여자에게 보이지 않습니다.</span>
+      <button id="ribbonX" type="button" aria-label="안내 닫기">×</button>
+    </div>
+    <div id="msgs" class="msgs" aria-live="polite"></div>
+    <button id="newPill" class="new-pill" type="button" hidden>새 의견 ↓</button>
+
+    <div id="composer" class="composer">
+      <div id="replyBox" class="reply-box" hidden><span id="replyText"></span><button id="replyCancel" type="button" aria-label="답글 취소">×</button></div>
+      <div id="warn" class="warn-line" hidden>🚫 욕설·비속어가 포함되어 있어요. 바르고 고운 말로 바꿔 주시면 등록할 수 있어요.</div>
+      <div class="compose-row">
+        <div class="emoji-wrap">
+          <button id="emojiBtn" class="icon-btn" type="button" title="이모티콘 넣기">😊</button>
+          <div id="emojiPop" class="emoji-pop" hidden></div>
+        </div>
+        <textarea id="input" rows="1" maxlength="500" placeholder="익명으로 의견을 남겨 주세요"></textarea>
+        <button id="send" class="btn btn-pri" type="button" disabled>보내기</button>
+      </div>
+      <div class="compose-foot"><span class="as" id="asWho">🔒 익명으로 작성됩니다</span><span>Enter 보내기 · Shift+Enter 줄바꿈 · <span id="count">0</span>/500</span></div>
+    </div>
+    <div id="closedCta" class="closed-cta" hidden>
+      <p>토론이 끝났어요. 함께 나눈 이야기를 한눈에 정리해 두었어요.</p>
+      <a id="bottomCta" class="btn btn-peach btn-lg pulse-cta" href="#">📊 분석 대시보드로 이동 →</a>
     </div>
   </section>
+
   <aside class="side">
-    <div class="panel">
-      <h2>실시간 주요 키워드</h2>
-      <ol class="kw" id="liveKw"></ol>
-      <p class="sub" id="kwEmpty">의견이 쌓이면 자주 나온 단어가 표시됩니다.</p>
-    </div>
-    <div class="panel">
-      <h2>감정 반응 현황</h2>
-      <div class="rs" id="liveReact"></div>
-    </div>
-    <div class="panel">
-      <h2>참여 안내</h2>
-      <ul class="guide">
-        <li>작성자는 이 토론에서만 쓰는 익명 이름으로 표시됩니다.</li>
-        <li>의견 아래 <b>😊+</b>를 눌러 감정 반응을 남기고, 한 번 더 누르면 취소됩니다.</li>
-        <li><b>답글</b>로 특정 의견에 이어서 말할 수 있습니다.</li>
-        <li>토론이 끝나면 분석 대시보드에서 키워드 빈도를 확인할 수 있습니다.</li>
+    <div class="card panel"><h3>실시간 주요 키워드 <small>TOP 10</small></h3><ol id="kw" class="kw"></ol></div>
+    <div class="card panel"><h3>감정 반응</h3><ul id="emo" class="emo"></ul></div>
+    <div class="card panel etiquette"><h3>함께 지켜요</h3>
+      <ul>
+        <li>🙊 말투나 내용으로 작성자를 추측하거나 묻지 않아요.</li>
+        <li>🌱 사람보다 제도와 일하는 방식을 이야기해요.</li>
+        <li>🚫 욕설·비속어는 자동으로 등록되지 않아요.</li>
+        <li>💡 문제와 함께 개선 아이디어도 남겨 주세요.</li>
       </ul>
     </div>
   </aside>
 </main>
+
+<div id="introModal" class="modal-back" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="introTitle">
+    <img id="introAva" class="intro-ava" alt="">
+    <h2 id="introTitle">오늘 이 토론에서 당신은<br><span id="introName" class="anon-name"></span>입니다</h2>
+    <p class="muted" style="margin:0">닉네임은 입장 순서와 관계없이 무작위로 정해졌어요.</p>
+    <ul>
+      <li>🙈 이름·이메일·부서는 다른 참여자에게 보이지 않아요.</li>
+      <li>🗂️ 의견에는 작성자 정보가 저장되지 않고 계정 정보와 분리 보관돼요.</li>
+      <li>🎲 다음 토론에서는 새로운 동물 닉네임이 정해져요.</li>
+    </ul>
+    <button id="introOk" class="btn btn-pri btn-lg btn-block" type="button">익명으로 입장하기</button>
+  </div>
+</div>
+
+<div id="endModal" class="modal-back" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="endTitle">
+    <div class="big-emoji">🎉</div>
+    <h2 id="endTitle" style="margin-top:12px">토론이 종료되었습니다</h2>
+    <p class="muted" style="margin:0">참여해 주셔서 고맙습니다.<br>모인 의견의 주요 키워드와 감정 흐름을 확인해 보세요.</p>
+    <div class="stack">
+      <a id="endCta" class="btn btn-peach btn-lg btn-block pulse-cta" href="#">📊 분석 대시보드로 이동 →</a>
+      <button id="endStay" class="btn btn-ghost btn-block" type="button">대화 기록 더 보기</button>
+    </div>
+  </div>
+</div>
+
 <script>
 (async () => {
-  const session = await Forum.requireSession();
-  if (!session) return;
-  Forum.bindLogout("logoutBtn");
   const $ = (id) => document.getElementById(id);
+  const esc = Forum.esc;
   const topicId = Number(new URLSearchParams(location.search).get("id"));
   if (!topicId) { location.replace(pageUrl("discussion.html")); return; }
-  $("reportLink").href = "report.html?id=" + topicId;
-  $("closedReport").href = "report.html?id=" + topicId;
-  $("endModalGo").href = "report.html?id=" + topicId;
-  $("endModalLater").onclick = () => { $("endModal").hidden = true; };
-  function setMe() {
-    $("me").innerHTML = state.myAlias !== null
-      ? Forum.avatarHtml(state.myAlias, "ava-sm") + Forum.esc(Forum.aliasName(state.myAlias))
-      : "첫 의견을 보내면 무작위로 정해집니다";
-  }
+  const session = await Forum.requireSession();
+  if (!session) return;
+  Forum.bindLogout("logout");
 
-  const state = {
-    topic: null, msgs: new Map(), counts: new Map(), mine: new Set(),
-    myAlias: null, isAdmin: false, reply: null, loaded: false, wasLive: null
-  };
+  const reportHref = "report.html?id=" + topicId;
+  ["reportLink", "bannerCta", "bottomCta", "endCta"].forEach((id) => { $(id).href = reportHref; });
+
   const box = $("msgs");
   const input = $("input");
+  const kwOpts = Keywords.buildOptions(Forum.loadKwSettings());
+  const state = {
+    topic: null, msgs: new Map(), counts: new Map(), mine: new Set(),
+    myAlias: null, isAdmin: false, reply: null, loaded: false, wasLive: null, sending: false
+  };
 
-  function fatal(text) { $("fatal").textContent = text; $("fatal").hidden = false; $("room").hidden = true; }
-
-  // ---------- 화면 그리기 ----------
-  function nearBottom() { return box.scrollHeight - box.scrollTop - box.clientHeight < 100; }
-  function scrollBottom() { box.scrollTop = box.scrollHeight; $("newBtn").hidden = true; }
-
-  function reactHtml(m, live) {
-    const c = state.counts.get(m.id) || {};
-    return Forum.REACTIONS.map((r) => {
-      const n = c[r.e] || 0;
-      if (n <= 0) return "";
-      const on = state.mine.has(m.id + "|" + r.e) ? " on" : "";
-      return `<button type="button" class="chip${on}" data-act="react" data-emoji="${r.e}" title="${r.label}"${live ? "" : " disabled"}>${r.e}<b>${n}</b></button>`;
-    }).join("");
+  function fatal(text) {
+    $("room").hidden = true;
+    $("fatal").hidden = false;
+    $("fatalText").textContent = text;
   }
 
-  function msgHtml(m) {
-    const live = Forum.isLive(state.topic);
-    const mine = state.myAlias !== null && m.alias_no === state.myAlias;
-    const name = Forum.aliasName(m.alias_no);
-    const color = Forum.aliasColor(m.alias_no);
-    let quote = "";
-    if (m.reply_to) {
-      const p = state.msgs.get(m.reply_to);
-      quote = p
-        ? `<div class="quote" data-act="jump" data-id="${p.id}">↳ ${Forum.esc(Forum.aliasName(p.alias_no))}: ${Forum.esc(p.hidden ? "숨겨진 메시지" : p.content.slice(0, 80))}</div>`
-        : `<div class="quote">↳ 이전 의견에 대한 답글</div>`;
-    }
-    let tools = "";
-    if (!m.hidden && live) {
-      tools += `<button type="button" class="tool" data-act="picker" title="감정 반응 남기기">😊+</button>`;
-      tools += `<button type="button" class="tool" data-act="reply">답글</button>`;
-    }
-    if (!m.hidden && state.isAdmin) tools += `<button type="button" class="tool danger" data-act="hide">숨김</button>`;
-    const picker = (!m.hidden && live)
-      ? `<div class="react-picker" hidden>${Forum.REACTIONS.map((r) => `<button type="button" data-act="react" data-emoji="${r.e}" title="${r.label}">${r.e}<span>${r.label}</span></button>`).join("")}</div>`
-      : "";
-    return `${Forum.avatarHtml(m.alias_no)}
-      <div class="body">
-        <div class="meta"><span class="name" style="color:${color}">${Forum.esc(name)}${mine ? " (나)" : ""}</span><span>${Forum.fmtTime(m.created_at)}</span></div>
-        ${quote}
-        <div class="bubble${m.hidden ? " hidden-msg" : ""}">${Forum.esc(m.content)}</div>
-        <div class="reacts">${reactHtml(m, live)}${tools}</div>
-        ${picker}
-      </div>`;
-  }
-
-  function renderOne(m) {
-    let el = document.getElementById("m-" + m.id);
-    const isNew = !el;
-    if (isNew) {
-      el = document.createElement("div");
-      el.id = "m-" + m.id;
-      el.dataset.id = m.id;
-    }
-    const mine = state.myAlias !== null && m.alias_no === state.myAlias;
-    el.className = "row" + (mine ? " mine" : "");
-    el.innerHTML = msgHtml(m);
-    if (isNew) {
-      const rows = box.querySelectorAll(".row");
-      const last = rows[rows.length - 1];
-      if (!last || Number(last.dataset.id) < m.id) {
-        box.appendChild(el);
-      } else {
-        const after = Array.from(rows).find((r) => Number(r.dataset.id) > m.id);
-        box.insertBefore(el, after || null);
-      }
-    }
-    $("empty").hidden = true;
-  }
-
-  function refreshMsg(id) {
-    const m = state.msgs.get(id);
-    if (m && document.getElementById("m-" + id)) renderOne(m);
-  }
-
-  function rerenderAll() {
-    box.querySelectorAll(".row").forEach((r) => r.remove());
-    const list = Array.from(state.msgs.values()).sort((a, b) => a.id - b.id);
-    list.forEach(renderOne);
-    $("empty").hidden = list.length > 0;
-    updateCounts();
-  }
-
-  function updateCounts() {
-    const list = Array.from(state.msgs.values()).filter((m) => !m.hidden);
-    $("cntMsg").textContent = list.length;
-    $("cntPeople").textContent = new Set(list.map((m) => m.alias_no)).size;
-  }
-
-  function updateStatus() {
-    const t = state.topic;
-    const live = Forum.isLive(t);
-    const changed = state.wasLive !== null && state.wasLive !== live;
-    state.wasLive = live;
-    $("status").textContent = live ? "진행 중" : "종료";
-    $("status").className = "badge " + (live ? "open" : "closed");
-    $("title").textContent = t.title;
-    document.title = t.title + " - 혁신 토론방";
-    $("desc").textContent = t.description || "";
-    $("desc").hidden = !t.description;
-    $("composer").hidden = !live;
-    $("closedNote").hidden = live;
-    if (!live) { setReply(null); $("emojiPicker").hidden = true; }
-    $("adminBar").hidden = !state.isAdmin;
-    $("toggleStatus").textContent = live ? "토론 종료하기" : "토론 다시 열기";
-    $("reportLink").classList.toggle("nav-cta", !live);
-    $("reportLink").textContent = live ? "분석 대시보드" : "📊 분석 대시보드 보기";
-    renderTimer();
-    if (changed) rerenderAll();
-    // 진행 중이던 토론이 끝나는 순간 분석 대시보드 이동 안내를 크게 띄웁니다.
-    if (changed && !live) $("endModal").hidden = false;
-    if (live) $("endModal").hidden = true;
-  }
-
-  function renderTimer() {
-    const t = state.topic;
-    if (!t) return;
-    if (!Forum.isLive(t)) { $("timer").textContent = "토론 종료"; return; }
-    if (!t.ends_at) { $("timer").textContent = "시간 제한 없음"; return; }
-    const s = Math.max(0, Math.floor((new Date(t.ends_at) - new Date()) / 1000));
-    const h = Math.floor(s / 3600), mi = Math.floor((s % 3600) / 60), se = s % 60;
-    $("timer").textContent = "남은 시간 " + (h ? h + "시간 " : "") + String(mi).padStart(2, "0") + ":" + String(se).padStart(2, "0");
-  }
-
-  // 1초마다 남은 시간을 갱신하고, 시간이 다 되면 자동으로 종료 화면으로 바꿉니다.
-  function tick() {
-    if (!state.topic) return;
-    if (Forum.isLive(state.topic) !== state.wasLive) updateStatus();
-    else renderTimer();
-  }
-
-  // ---------- 오른쪽 실시간 패널 ----------
-  let sideTimer = null;
-  function scheduleSide() { clearTimeout(sideTimer); sideTimer = setTimeout(renderSide, 400); }
-  function renderSide() {
-    updateCounts();
-    const titleWords = Keywords.extract(state.topic ? state.topic.title : "");
-    const opts = Keywords.buildOptions({ extraStop: titleWords });
-    const freq = new Map();
-    state.msgs.forEach((m) => {
-      if (m.hidden) return;
-      Keywords.extract(m.content, opts).forEach((k) => freq.set(k, (freq.get(k) || 0) + 1));
-    });
-    const top = Array.from(freq.entries()).sort((a, b) => b[1] - a[1]).slice(0, 10);
-    const max = top.length ? top[0][1] : 1;
-    $("liveKw").innerHTML = top.map((x, i) => `<li><span class="rank">${i + 1}</span>
-      <span class="bar"><i style="width:${Math.round((x[1] / max) * 100)}%"></i><span>${Forum.esc(x[0])}</span></span>
-      <span class="n">${x[1]}</span></li>`).join("");
-    $("kwEmpty").hidden = top.length > 0;
-    const totals = {};
-    state.counts.forEach((c, id) => {
-      const m = state.msgs.get(id);
-      if (!m || m.hidden) return;
-      Object.keys(c).forEach((e) => { totals[e] = (totals[e] || 0) + c[e]; });
-    });
-    $("liveReact").innerHTML = Forum.REACTIONS.map((r) => `<div title="${r.label}">${r.e}<small>${totals[r.e] || 0}</small></div>`).join("");
-  }
-
-  // ---------- 데이터 ----------
-  function addMessage(m) {
-    const exists = state.msgs.has(m.id);
-    state.msgs.set(m.id, m);
-    if (!state.loaded) return;
-    const atBottom = nearBottom();
-    renderOne(m);
-    if (!exists) {
-      const mine = state.myAlias !== null && m.alias_no === state.myAlias;
-      if (mine || atBottom) scrollBottom(); else $("newBtn").hidden = false;
-      state.msgs.forEach((x) => { if (x.reply_to === m.id) refreshMsg(x.id); });
-    }
-    scheduleSide();
-  }
-
+  // ---------- 데이터 불러오기 ----------
   async function loadAll() {
     try {
-      const [t, ms, rc, mr, ma, adm] = await Promise.all([
+      const [t, ms, rc, mr, adm] = await Promise.all([
         sb.from("topics").select("*").eq("id", topicId).maybeSingle(),
         Forum.fetchAll(() => sb.from("messages").select("*").eq("topic_id", topicId).order("id", { ascending: true })),
         Forum.fetchAll(() => sb.from("reaction_counts").select("message_id,emoji,cnt").eq("topic_id", topicId).order("message_id")),
         sb.rpc("my_reactions", { p_topic: topicId }),
-        sb.rpc("my_alias", { p_topic: topicId }),
         sb.rpc("is_admin")
       ]);
-      const err = t.error || mr.error || ma.error || adm.error;
+      const err = t.error || mr.error || adm.error;
       if (err) throw err;
       if (!t.data) { fatal("토론을 찾을 수 없습니다. 삭제되었을 수 있습니다."); return false; }
       state.topic = t.data;
       state.isAdmin = adm.data === true;
-      state.myAlias = (ma.data === null || ma.data === undefined) ? null : ma.data;
+      state.msgs = new Map();
       ms.forEach((m) => state.msgs.set(m.id, m));
       state.counts = new Map();
       rc.forEach((r) => {
@@ -371,19 +277,210 @@ body{height:100vh;overflow:hidden;display:flex;flex-direction:column}
         state.counts.set(r.message_id, c);
       });
       state.mine = new Set((mr.data || []).map((r) => r.message_id + "|" + r.emoji));
-      setMe();
+      await ensureAlias();
       state.loaded = true;
       $("room").hidden = false;
       updateStatus();
       rerenderAll();
       renderSide();
-      scrollBottom();
+      scrollBottom(true);
       return true;
     } catch (e) {
       fatal(Forum.dbError(e));
       return false;
     }
   }
+
+  // 입장 시 무작위 동물 닉네임 배정 (진행 중인 토론일 때)
+  async function ensureAlias() {
+    if (state.myAlias != null) return;
+    const fn = Forum.isLive(state.topic) ? "join_topic" : "my_alias";
+    let res = await sb.rpc(fn, { p_topic: topicId });
+    if (res.error && fn === "join_topic") res = await sb.rpc("my_alias", { p_topic: topicId });
+    if (res.error) throw res.error;
+    state.myAlias = res.data == null ? null : res.data;
+    setMe();
+  }
+
+  function setMe() {
+    const n = state.myAlias;
+    if (n) {
+      $("meChip").innerHTML = `${Forum.avatarHtml(n, "ava")}<span class="lbl">익명 보호 중 ·</span><b>${esc(Forum.aliasName(n))}</b>`;
+      $("asWho").innerHTML = `<img src="${Forum.aliasImg(n)}" alt="">${esc(Forum.aliasName(n))}(으)로 익명 작성 · 실명은 표시되지 않아요`;
+      input.placeholder = Forum.aliasName(n) + "(으)로 의견을 남겨 주세요";
+    } else {
+      $("meChip").innerHTML = '<span class="lock">🔒</span><span class="lbl">익명 관람 중</span>';
+    }
+  }
+
+  function showIntro() {
+    const n = state.myAlias;
+    const key = "anonIntro_" + topicId;
+    if (!n || !Forum.isLive(state.topic) || localStorage.getItem(key)) return;
+    $("introAva").src = Forum.aliasImg(n);
+    $("introAva").alt = Forum.aliasName(n);
+    $("introName").textContent = "'" + Forum.aliasName(n) + "'";
+    $("introModal").hidden = false;
+    $("introOk").focus();
+    $("introOk").onclick = () => {
+      localStorage.setItem(key, "1");
+      $("introModal").hidden = true;
+      input.focus();
+    };
+  }
+
+  // ---------- 화면 그리기 ----------
+  function msgHtml(m) {
+    const mine = state.myAlias != null && m.alias_no === state.myAlias;
+    const live = Forum.isLive(state.topic);
+    let quote = "";
+    if (m.reply_to) {
+      const p = state.msgs.get(m.reply_to);
+      const txt = p ? (p.hidden ? "숨겨진 의견" : p.content.slice(0, 50)) : "삭제된 의견";
+      quote = `<div class="quote">↳ ${esc(p ? Forum.aliasName(p.alias_no) : "")} ${esc(txt)}</div>`;
+    }
+    const c = state.counts.get(m.id) || {};
+    const chips = Forum.REACTIONS.filter((r) => c[r.e] > 0).map((r) =>
+      `<button type="button" class="chip ${state.mine.has(m.id + "|" + r.e) ? "on" : ""}" data-act="react" data-emoji="${r.e}" title="${esc(r.label)}" ${live ? "" : "disabled"}>${r.e}<b>${c[r.e]}</b></button>`
+    ).join("");
+    let tools = "";
+    let picker = "";
+    if (!m.hidden) {
+      const parts = [];
+      if (live) {
+        parts.push('<button type="button" class="tool" data-act="picker" title="감정 남기기">😊 감정 남기기</button>');
+        parts.push('<button type="button" class="tool" data-act="reply">↩ 답글</button>');
+        picker = `<div class="react-picker" hidden>${Forum.REACTIONS.map((r) =>
+          `<button type="button" data-act="react" data-emoji="${r.e}" title="${esc(r.label)}"><span>${r.e}</span><small>${esc(r.label)}</small></button>`
+        ).join("")}</div>`;
+      }
+      if (state.isAdmin) parts.push('<button type="button" class="tool danger" data-act="hide">숨기기</button>');
+      if (parts.length) tools = `<div class="tools">${parts.join("")}</div>`;
+    }
+    const body = m.hidden ? "관리자가 숨긴 의견입니다." : esc(m.content).replace(/\n/g, "<br>");
+    return `<div class="row ${mine ? "mine" : ""} ${m.hidden ? "is-hidden" : ""}" data-id="${m.id}">
+      ${Forum.avatarHtml(m.alias_no, "ava")}
+      <div class="col">
+        <div class="who"><b style="color:${Forum.aliasColor(m.alias_no)}">${esc(Forum.aliasName(m.alias_no))}</b>${mine ? '<span class="me">나</span>' : ""}<time>${Forum.fmtTime(m.created_at)}</time></div>
+        ${quote}
+        <div class="bubble">${body}</div>
+        <div class="reacts">${chips}</div>
+        ${tools}${picker}
+      </div>
+    </div>`;
+  }
+
+  function emptyHtml() {
+    return Forum.isLive(state.topic)
+      ? '<div class="welcome-empty"><div class="big">🌱</div><p>아직 의견이 없어요.<br>첫 의견을 익명으로 남겨 주세요.</p></div>'
+      : '<div class="welcome-empty"><div class="big">🗂️</div><p>남겨진 의견이 없어요.</p></div>';
+  }
+
+  function rerenderAll() {
+    const list = Array.from(state.msgs.values()).sort((a, b) => a.id - b.id);
+    box.innerHTML = list.length ? list.map(msgHtml).join("") : emptyHtml();
+  }
+
+  function nearBottom() { return box.scrollHeight - box.scrollTop - box.clientHeight < 120; }
+  function scrollBottom(force) {
+    if (force || nearBottom()) { box.scrollTop = box.scrollHeight; $("newPill").hidden = true; }
+  }
+  box.addEventListener("scroll", () => { if (nearBottom()) $("newPill").hidden = true; });
+  $("newPill").onclick = () => scrollBottom(true);
+
+  function refreshMsg(id) {
+    const m = state.msgs.get(id);
+    const row = box.querySelector(`.row[data-id="${id}"]`);
+    if (!m || !row) return;
+    const openPicker = row.querySelector(".react-picker:not([hidden])");
+    row.outerHTML = msgHtml(m);
+    if (openPicker) {
+      const p = box.querySelector(`.row[data-id="${id}"] .react-picker`);
+      if (p) p.hidden = false;
+    }
+  }
+
+  function addMessage(m, mineJustSent) {
+    if (!m || m.topic_id !== topicId) return;
+    const exists = state.msgs.has(m.id);
+    state.msgs.set(m.id, m);
+    if (!state.loaded) return;
+    if (exists) { refreshMsg(m.id); scheduleSide(); return; }
+    const wasNear = nearBottom();
+    if (!box.querySelector(".row")) box.innerHTML = "";
+    box.insertAdjacentHTML("beforeend", msgHtml(m));
+    if (mineJustSent || wasNear) scrollBottom(true);
+    else $("newPill").hidden = false;
+    scheduleSide();
+  }
+
+  let sideTimer = null;
+  function scheduleSide() { clearTimeout(sideTimer); sideTimer = setTimeout(renderSide, 400); }
+  function renderSide() {
+    const freq = new Map();
+    state.msgs.forEach((m) => {
+      if (m.hidden) return;
+      Keywords.extract(m.content, kwOpts).forEach((w) => freq.set(w, (freq.get(w) || 0) + 1));
+    });
+    const top = Array.from(freq.entries()).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).slice(0, 10);
+    const max = top.length ? top[0][1] : 1;
+    $("kw").innerHTML = top.length ? top.map(([w, n], i) =>
+      `<li><span class="rk">${i + 1}</span><span class="w" title="${esc(w)}">${esc(w)}</span><span class="bar"><i style="width:${Math.max(8, Math.round(n / max * 100))}%"></i></span><span class="n">${n}</span></li>`
+    ).join("") : '<li class="none">의견이 모이면 키워드가 나타나요.</li>';
+    const tot = {};
+    Forum.REACTIONS.forEach((r) => { tot[r.e] = 0; });
+    state.counts.forEach((c, id) => {
+      const m = state.msgs.get(id);
+      if (!m || m.hidden) return;
+      Forum.REACTIONS.forEach((r) => { tot[r.e] += c[r.e] || 0; });
+    });
+    $("emo").innerHTML = Forum.REACTIONS.map((r) =>
+      `<li title="${esc(r.label)}"><span class="e">${r.e}</span><b>${tot[r.e]}</b><small>${esc(r.label)}</small></li>`
+    ).join("");
+  }
+
+  function updateStatus() {
+    const t = state.topic;
+    const live = Forum.isLive(t);
+    const c = Forum.category(t.category);
+    $("cat").textContent = c.icon + " " + c.name;
+    $("cat").style.background = c.color + "1f";
+    $("cat").style.color = c.color;
+    $("title").textContent = t.title;
+    $("desc").textContent = t.description || "";
+    $("desc").hidden = !t.description;
+    document.title = t.title + " | 익명 토론방";
+    if (live) {
+      $("status").className = "badge live";
+      $("status").innerHTML = "<i></i>진행 중";
+      $("timer").textContent = t.ends_at ? "⏳ 남은 시간 " + Forum.remain(t.ends_at) : "⏳ 종료 시간 없음";
+    } else {
+      $("status").className = "badge done";
+      $("status").textContent = "종료";
+      $("timer").textContent = "토론이 종료되었습니다";
+    }
+    $("composer").hidden = !live;
+    $("closedCta").hidden = live;
+    $("closedBanner").hidden = live;
+    $("reportLink").classList.toggle("hot", !live);
+    if (state.isAdmin) {
+      $("adminBar").hidden = false;
+      $("btnClose").hidden = !live;
+      $("btnReopen").hidden = live;
+    }
+    if (state.wasLive !== null && state.wasLive !== live) {
+      rerenderAll();
+      if (!live) {
+        $("introModal").hidden = true;
+        $("endModal").hidden = false;
+        $("endCta").focus();
+      } else {
+        ensureAlias().catch(() => {});
+      }
+    }
+    state.wasLive = live;
+  }
+  $("endStay").onclick = () => { $("endModal").hidden = true; };
 
   // ---------- 실시간 연결 ----------
   const presenceKey = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : String(Math.random()).slice(2);
@@ -406,13 +503,13 @@ body{height:100vh;overflow:hidden;display:flex;flex-direction:column}
       if (state.loaded) updateStatus();
     })
     .on("presence", { event: "sync" }, () => {
-      $("online").textContent = "현재 접속 " + Object.keys(channel.presenceState()).length + "명";
+      $("online").textContent = "지금 " + Object.keys(channel.presenceState()).length + "명 함께하는 중";
     })
     .subscribe((status) => {
       if (status === "SUBSCRIBED") {
         $("connDot").className = "dot";
         channel.track({ joined_at: Date.now() });
-        if (connectedOnce) loadAll(); // 끊겼다가 다시 연결되면 빠진 내용을 다시 불러옵니다.
+        if (connectedOnce) loadAll();
         connectedOnce = true;
       } else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
         $("connDot").className = "dot off";
@@ -422,14 +519,17 @@ body{height:100vh;overflow:hidden;display:flex;flex-direction:column}
 
   const ok = await loadAll();
   if (!ok) return;
-  setInterval(tick, 1000);
+  showIntro();
+  setInterval(() => { if (state.loaded) updateStatus(); }, 1000);
 
   // ---------- 동작 ----------
+  $("ribbonX").onclick = () => { $("anonRibbon").hidden = true; };
+
   function setReply(id) {
     state.reply = id;
     if (!id) { $("replyBox").hidden = true; return; }
     const m = state.msgs.get(id);
-    $("replyText").textContent = "↳ " + Forum.aliasName(m.alias_no) + "에게 답글: " + m.content.slice(0, 60);
+    $("replyText").textContent = "↩ " + Forum.aliasName(m.alias_no) + "에게 답글: " + m.content.slice(0, 60);
     $("replyBox").hidden = false;
     input.focus();
   }
@@ -473,45 +573,45 @@ body{height:100vh;overflow:hidden;display:flex;flex-direction:column}
     } else if (act === "reply") {
       setReply(id);
     } else if (act === "hide") {
-      if (!confirm("이 의견을 숨길까요? 내용이 삭제되고 분석에서도 빠집니다.")) return;
+      if (!confirm("이 의견을 숨길까요? 내용이 지워지고 분석에서도 빠집니다.")) return;
       const { error } = await sb.rpc("hide_message", { p_message: id });
       if (error) Forum.toast(Forum.dbError(error));
-    } else if (act === "jump") {
-      const target = document.getElementById("m-" + btn.dataset.id);
-      if (target) {
-        target.scrollIntoView({ block: "center", behavior: "smooth" });
-        target.classList.add("flash");
-        setTimeout(() => target.classList.remove("flash"), 1500);
-      }
     }
   });
 
-  box.addEventListener("scroll", () => { if (nearBottom()) $("newBtn").hidden = true; });
-  $("newBtn").onclick = scrollBottom;
+  document.addEventListener("click", (e) => {
+    if (!e.target.closest(".react-picker") && !e.target.closest('[data-act="picker"]')) closePickers(null);
+    if (!e.target.closest(".emoji-wrap")) $("emojiPop").hidden = true;
+  });
 
   // 이모티콘 넣기
-  $("emojiPicker").innerHTML = Forum.INSERT_EMOJIS.map((x) => `<button type="button">${x}</button>`).join("");
-  $("emojiBtn").onclick = (e) => { e.stopPropagation(); $("emojiPicker").hidden = !$("emojiPicker").hidden; };
-  $("emojiPicker").addEventListener("click", (e) => {
-    const b = e.target.closest("button");
+  $("emojiPop").innerHTML = Forum.INSERT_EMOJIS.map((x) => `<button type="button" data-e="${x}">${x}</button>`).join("");
+  $("emojiBtn").onclick = () => { $("emojiPop").hidden = !$("emojiPop").hidden; };
+  $("emojiPop").onclick = (e) => {
+    const b = e.target.closest("[data-e]");
     if (!b) return;
-    const s = input.selectionStart, en = input.selectionEnd;
-    input.value = input.value.slice(0, s) + b.textContent + input.value.slice(en);
-    const pos = s + b.textContent.length;
-    input.setSelectionRange(pos, pos);
+    const s = input.selectionStart == null ? input.value.length : input.selectionStart;
+    const en = input.selectionEnd == null ? s : input.selectionEnd;
+    input.value = input.value.slice(0, s) + b.dataset.e + input.value.slice(en);
+    const pos = s + b.dataset.e.length;
     input.focus();
+    input.setSelectionRange(pos, pos);
     onInput();
-  });
-  document.addEventListener("click", (e) => {
-    if (!e.target.closest("#emojiPicker") && !e.target.closest("#emojiBtn")) $("emojiPicker").hidden = true;
-    if (!e.target.closest(".react-picker") && !e.target.closest('[data-act="picker"]')) closePickers(null);
-  });
+  };
 
-  // 입력창
+  // 입력·욕설 확인
+  function autoGrow() {
+    input.style.height = "auto";
+    input.style.height = Math.min(140, input.scrollHeight) + "px";
+  }
   function onInput() {
-    input.style.height = "42px";
-    input.style.height = Math.min(input.scrollHeight + 2, 120) + "px";
-    $("charCount").textContent = input.value.length + "/500";
+    const v = input.value;
+    $("count").textContent = v.length;
+    const bad = Profanity.check(v).bad;
+    $("warn").hidden = !bad;
+    input.classList.toggle("bad", bad);
+    $("send").disabled = !v.trim() || bad || state.sending;
+    autoGrow();
   }
   input.addEventListener("input", onInput);
   input.addEventListener("keydown", (e) => {
@@ -520,44 +620,44 @@ body{height:100vh;overflow:hidden;display:flex;flex-direction:column}
       send();
     }
   });
+  $("send").onclick = send;
 
-  let sending = false;
   async function send() {
     const text = input.value.trim();
-    if (!text || sending) return;
-    sending = true;
-    $("sendBtn").disabled = true;
-    const { error } = await sb.rpc("post_message", { p_topic: topicId, p_content: text, p_reply: state.reply });
-    sending = false;
-    $("sendBtn").disabled = false;
-    if (error) { Forum.toast(Forum.dbError(error)); return; }
+    if (!text || state.sending) return;
+    if (text.length > 500) { Forum.toast("의견은 500자까지 쓸 수 있어요."); return; }
+    if (Profanity.check(text).bad) { Forum.toast("욕설·비속어가 포함되어 있어 등록할 수 없어요."); onInput(); return; }
+    state.sending = true;
+    $("send").disabled = true;
+    const { data, error } = await sb.rpc("post_message", { p_topic: topicId, p_content: text, p_reply: state.reply });
+    state.sending = false;
+    if (error) { Forum.toast(Forum.dbError(error)); onInput(); return; }
     input.value = "";
-    onInput();
     setReply(null);
-    input.focus();
-    if (state.myAlias === null) {
-      const { data } = await sb.rpc("my_alias", { p_topic: topicId });
-      if (data !== null && data !== undefined) {
-        state.myAlias = data;
-        setMe();
-        rerenderAll();
-      }
+    onInput();
+    if (state.myAlias == null) {
+      const a = await sb.rpc("my_alias", { p_topic: topicId });
+      if (!a.error && a.data != null) { state.myAlias = a.data; setMe(); rerenderAll(); }
     }
-    scrollBottom();
+    const r = await sb.from("messages").select("*").eq("id", data).maybeSingle();
+    if (r.data) addMessage(r.data, true);
   }
-  $("composer").onsubmit = (e) => { e.preventDefault(); send(); };
 
-  // 관리자: 종료/재개
-  $("toggleStatus").onclick = async () => {
-    const live = Forum.isLive(state.topic);
-    if (live && !confirm("토론을 종료하면 더 이상 의견과 반응을 남길 수 없습니다. 종료할까요?")) return;
-    const { error } = await sb.rpc("set_topic_status", { p_topic: topicId, p_status: live ? "closed" : "open" });
+  // 관리자
+  $("btnClose").onclick = async () => {
+    if (!confirm("토론을 종료할까요? 모든 참여자 화면에 대시보드 이동 안내가 표시됩니다.")) return;
+    const { error } = await sb.rpc("set_topic_status", { p_topic: topicId, p_status: "closed" });
     if (error) { Forum.toast(Forum.dbError(error)); return; }
-    const { data } = await sb.from("topics").select("*").eq("id", topicId).maybeSingle();
-    if (data) { state.topic = data; updateStatus(); }
+    const t = await sb.from("topics").select("*").eq("id", topicId).maybeSingle();
+    if (t.data) { state.topic = t.data; updateStatus(); }
+  };
+  $("btnReopen").onclick = async () => {
+    const { error } = await sb.rpc("set_topic_status", { p_topic: topicId, p_status: "open" });
+    if (error) { Forum.toast(Forum.dbError(error)); return; }
+    const t = await sb.from("topics").select("*").eq("id", topicId).maybeSingle();
+    if (t.data) { state.topic = t.data; updateStatus(); }
   };
 })();
 </script>
-<div class="art-credit">배경: AI 생성 일러스트</div>
 </body>
 </html>

@@ -1,156 +1,297 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ko">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>혁신 토론방</title>
-<link rel="stylesheet" href="forum.css">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<link rel="stylesheet" href="ui.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="config.js"></script>
 <script src="auth.js"></script>
 <script src="forum.js"></script>
-<script src="keywords.js"></script>
+<title>혁신 토론방 | 의왕도시공사 익명 토론회</title>
 <style>
-.page-head{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;margin-bottom:16px;flex-wrap:wrap}
-.admin{margin-bottom:16px}
-.admin .grid{display:grid;grid-template-columns:2fr 1fr;gap:12px}
-.admin input[type=text],.admin textarea,.admin select{width:100%}
-.admin textarea{resize:vertical;min-height:60px}
-.topics{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px}
-.topic h3{font-size:16px;margin:8px 0 4px;line-height:1.4}
-.topic .desc{font-size:14px;color:#4b5563;margin-bottom:10px;white-space:pre-wrap;word-break:break-word}
-.topic .stats{display:flex;gap:16px;font-size:13px;color:#6b7280;margin-bottom:12px}
-.topic .stats b{color:#111827;font-size:15px}
-.topic .actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-.empty{padding:40px;text-align:center;color:#6b7280}
-@media(max-width:640px){.admin .grid{grid-template-columns:1fr}}
+.hero{display:grid;grid-template-columns:1.4fr 1fr;gap:18px}
+.hero-main{padding:30px 32px;background:rgba(255,255,255,.93)}
+.hero-main h1{font-size:30px;margin:12px 0 8px}
+.hero-main p{margin:0;color:#4b5158}
+.hero-anon{padding:24px 26px;background:linear-gradient(160deg,#f1eefc,#eaf1fd);border:1px solid #e2dcf7;color:#4b3fa6}
+.hero-anon b{font-size:16px;display:block;margin-bottom:10px}
+.hero-anon ul{margin:0;padding:0;list-style:none;display:grid;gap:7px;font-size:13.5px}
+.admin{margin-top:18px;padding:22px 24px;background:rgba(255,255,255,.95)}
+.admin summary{cursor:pointer;font-weight:800;font-size:16px;list-style:none;display:flex;align-items:center;gap:8px}
+.admin summary::-webkit-details-marker{display:none}
+.admin summary::after{content:"▾";margin-left:auto;color:var(--mute)}
+.admin[open] summary::after{content:"▴"}
+.admin-grid{display:grid;grid-template-columns:2fr 1fr 1fr;gap:12px;margin-top:16px}
+.sugg{display:flex;flex-wrap:wrap;gap:6px;margin:-4px 0 14px}
+.sugg button{border:1px dashed #c9d8f6;background:#f6f9ff;color:var(--pri-d);border-radius:999px;padding:5px 12px;font-size:12.5px;cursor:pointer}
+.sugg button:hover{background:var(--pri-soft)}
+.toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:30px 0 14px;flex-wrap:wrap}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips button{border:1px solid var(--line);background:rgba(255,255,255,.9);border-radius:999px;padding:7px 14px;font-size:13.5px;font-weight:600;cursor:pointer;color:#4b5158}
+.chips button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.seg{display:flex;background:rgba(255,255,255,.9);border:1px solid var(--line);border-radius:12px;padding:3px}
+.seg button{border:0;background:none;padding:7px 14px;border-radius:9px;font-size:13.5px;font-weight:700;color:var(--sub);cursor:pointer}
+.seg button.on{background:var(--pri-soft);color:var(--pri-d)}
+.topics{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:14px}
+.topic{padding:22px;background:rgba(255,255,255,.95);display:flex;flex-direction:column;gap:10px;transition:transform .18s,box-shadow .18s}
+.topic:hover{transform:translateY(-2px);box-shadow:var(--sh)}
+.topic.is-live{border-color:#bfe3d3}
+.topic-top{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.topic h3{font-size:18px}
+.topic p{margin:0;color:var(--sub);font-size:14px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.topic .meta{font-size:13px;color:var(--sub);display:flex;gap:10px;flex-wrap:wrap}
+.topic .meta b{color:var(--ink)}
+.topic .acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:auto;padding-top:6px}
+.topic .admin-acts{display:flex;gap:6px;border-top:1px dashed var(--line);padding-top:10px}
+.stage-sum{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px}
+.actions-list{background:rgba(255,255,255,.95);overflow:auto}
+.actions-list td.t{max-width:460px}
+.actions-list .from{font-size:12px;color:var(--mute)}
+@media(max-width:900px){.hero{grid-template-columns:1fr}.admin-grid{grid-template-columns:1fr}.stage-sum{grid-template-columns:1fr 1fr}}
 </style>
 </head>
-<body class="bg-lobby">
+<body>
+<div class="bg-scene" style="background-image:url(img/bg/lobby.jpg)"></div>
 <header class="topbar">
-  <a class="brand" href="discussion.html">혁신 토론방</a>
-  <nav><a href="dashboard.html">내 계정</a><a href="#" id="logoutBtn">로그아웃</a></nav>
+  <div class="brand-host" data-brand="dashboard.html"></div>
+  <div class="sp"></div>
+  <span class="anon-chip"><span class="lock">🔒</span>익명 참여 모드</span>
+  <nav class="nav"><a href="dashboard.html">홈</a><a class="on" href="discussion.html">토론방</a><button id="logout" type="button">로그아웃</button></nav>
 </header>
 <main class="wrap">
-  <div class="page-head">
-    <div>
-      <h1>회사 혁신 방향 토론</h1>
-      <p class="sub">모든 의견은 익명 이름(예: 익명 펭귄 🐧)으로 표시되며, 다른 참여자는 작성자를 알 수 없습니다.</p>
+  <section class="hero">
+    <div class="card hero-main">
+      <span class="eyebrow">정기 익명 토론회</span>
+      <h1>혁신과 소통을 위한 익명 토론회</h1>
+      <p>직급도 부서도 내려놓고, 우리 공사가 더 나아질 방법을 함께 이야기해요.<br>공감을 많이 받은 의견은 혁신과제로 상정되어 실제 변화로 이어집니다.</p>
     </div>
-  </div>
-
-  <section class="panel admin" id="adminPanel" hidden>
-    <h2>새 토론 만들기 (관리자)</h2>
-    <form id="createForm">
-      <div class="grid">
-        <div>
-          <label for="title">토론 주제</label>
-          <input type="text" id="title" maxlength="120" required placeholder="예: 2027년 우리 회사가 가장 먼저 바꿔야 할 것은?">
-        </div>
-        <div>
-          <label for="minutes">토론 시간</label>
-          <select id="minutes">
-            <option value="">제한 없음 (직접 종료)</option>
-            <option value="30">30분</option>
-            <option value="60" selected>60분</option>
-            <option value="90">90분</option>
-            <option value="120">120분</option>
-            <option value="1440">24시간</option>
-            <option value="10080">7일</option>
-          </select>
-        </div>
-      </div>
-      <label for="desc">설명 (선택)</label>
-      <textarea id="desc" maxlength="1000" placeholder="토론 배경, 진행 방식, 참고 사항을 적어 주세요."></textarea>
-      <button class="btn" id="createBtn" style="margin-top:12px">토론 시작</button>
-    </form>
+    <div class="card hero-anon">
+      <b>🔒 다른 참여자는 누구도 당신이 누구인지 알 수 없어요</b>
+      <ul>
+        <li>🎲 토론마다 동물 닉네임이 무작위로 새로 정해집니다.</li>
+        <li>🙈 이름·이메일·부서는 토론방 어디에도 표시되지 않습니다.</li>
+        <li>🗂️ 의견에는 작성자 정보가 저장되지 않고 계정 정보와 분리됩니다.</li>
+      </ul>
+    </div>
   </section>
 
-  <div id="msg" class="msg error" hidden></div>
-  <section class="topics" id="list"></section>
+  <details id="adminPanel" class="card admin" hidden>
+    <summary>➕ 새 토론 열기 <span class="badge round">관리자</span></summary>
+    <form id="createForm">
+      <div class="admin-grid">
+        <label class="field"><span>토론 주제</span><input id="cTitle" maxlength="120" placeholder="예: 결재 단계를 줄이려면 무엇부터 바꿔야 할까요?" required></label>
+        <label class="field"><span>토론 테마</span><select id="cCat"></select></label>
+        <label class="field"><span>토론 시간</span>
+          <select id="cMin">
+            <option value="30">30분</option><option value="60" selected>60분</option><option value="90">90분</option>
+            <option value="1440">24시간</option><option value="10080">7일</option><option value="">제한 없음</option>
+          </select></label>
+      </div>
+      <div class="sugg" id="sugg"></div>
+      <label class="field"><span>안내 문구 (선택)</span><textarea id="cDesc" rows="2" maxlength="1000" placeholder="토론 배경이나 이야기해 주었으면 하는 점을 적어 주세요."></textarea></label>
+      <button class="btn btn-pri" type="submit">토론 열기</button>
+    </form>
+  </details>
+
+  <div class="toolbar">
+    <div class="chips" id="catChips"></div>
+    <div class="seg" id="seg"><button data-st="all" class="on" type="button">전체</button><button data-st="live" type="button">진행 중</button><button data-st="done" type="button">종료</button></div>
+  </div>
+  <div id="list" class="topics"><div class="card empty">불러오는 중…</div></div>
+
+  <div class="section-title"><h2>Voice → Action 혁신과제 현황</h2><p>토론에서 모인 의견이 어디까지 왔는지 모두 함께 확인해요.</p></div>
+  <div class="stage-sum" id="stageSum"></div>
+  <div class="card actions-list" id="actions"><div class="empty">불러오는 중…</div></div>
 </main>
 <script>
 (async () => {
+  const $ = (id) => document.getElementById(id);
+  const esc = Forum.esc;
   const session = await Forum.requireSession();
   if (!session) return;
-  Forum.bindLogout("logoutBtn");
-  history.replaceState(null, "", location.pathname);
-  const $ = (id) => document.getElementById(id);
+  Forum.bindLogout("logout");
+
   let isAdmin = false;
+  let topics = [];
+  let roundNo = new Map();
+  let filterCat = "전체";
+  let filterSt = "all";
 
-  function showError(text) { $("msg").textContent = text; $("msg").hidden = !text; }
+  const adm = await sb.rpc("is_admin");
+  isAdmin = adm.data === true;
 
-  async function load() {
-    const [adm, res] = await Promise.all([
-      sb.rpc("is_admin"),
-      sb.from("topic_summary").select("*").order("created_at", { ascending: false })
-    ]);
-    const err = adm.error || res.error;
-    if (err) { showError(Forum.dbError(err)); return; }
-    isAdmin = adm.data === true;
-    $("adminPanel").hidden = !isAdmin;
-    render(res.data || []);
+  // 관리자 토론 만들기
+  if (isAdmin) {
+    $("adminPanel").hidden = false;
+    $("cCat").innerHTML = Forum.CATEGORIES.map((c) => `<option value="${esc(c.name)}">${c.icon} ${esc(c.name)}</option>`).join("");
+    const renderSugg = () => {
+      const c = Forum.category($("cCat").value);
+      $("sugg").innerHTML = c.examples.map((x) => `<button type="button" data-s="${esc(x)}">💡 ${esc(x)}</button>`).join("");
+    };
+    $("cCat").onchange = renderSugg;
+    renderSugg();
+    $("sugg").onclick = (e) => {
+      const b = e.target.closest("[data-s]");
+      if (!b) return;
+      $("cTitle").value = b.dataset.s + "에 대해 어떻게 생각하시나요?";
+      $("cTitle").focus();
+    };
+    $("createForm").onsubmit = async (e) => {
+      e.preventDefault();
+      const title = $("cTitle").value.trim();
+      if (!title) { Forum.toast("토론 주제를 입력해 주세요."); return; }
+      const btn = e.target.querySelector("button[type=submit]");
+      btn.disabled = true;
+      const m = $("cMin").value;
+      const { data, error } = await sb.rpc("create_topic", {
+        p_title: title, p_description: $("cDesc").value.trim(),
+        p_minutes: m ? Number(m) : null, p_category: $("cCat").value
+      });
+      btn.disabled = false;
+      if (error) { Forum.toast(Forum.dbError(error)); return; }
+      e.target.reset();
+      renderSugg();
+      $("adminPanel").open = false;
+      Forum.toast("새 토론을 열었어요.");
+      await loadTopics();
+      if (data) location.href = "room.html?id=" + data;
+    };
   }
 
-  function render(rows) {
-    const list = $("list");
-    if (!rows.length) {
-      list.innerHTML = '<div class="panel empty" style="grid-column:1/-1">' +
-        (isAdmin ? "아직 토론이 없습니다. 위에서 첫 토론을 만들어 보세요." : "아직 열린 토론이 없습니다. 관리자가 토론을 열면 여기에 표시됩니다.") +
-        "</div>";
+  // 필터
+  $("catChips").innerHTML = ["전체"].concat(Forum.CATEGORIES.map((c) => c.name)).map((n) => {
+    const c = Forum.category(n);
+    return `<button type="button" data-cat="${esc(n)}" class="${n === "전체" ? "on" : ""}">${n === "전체" ? "" : c.icon + " "}${esc(n)}</button>`;
+  }).join("");
+  $("catChips").onclick = (e) => {
+    const b = e.target.closest("[data-cat]");
+    if (!b) return;
+    filterCat = b.dataset.cat;
+    $("catChips").querySelectorAll("button").forEach((x) => x.classList.toggle("on", x === b));
+    renderTopics();
+  };
+  $("seg").onclick = (e) => {
+    const b = e.target.closest("[data-st]");
+    if (!b) return;
+    filterSt = b.dataset.st;
+    $("seg").querySelectorAll("button").forEach((x) => x.classList.toggle("on", x === b));
+    renderTopics();
+  };
+
+  async function loadTopics() {
+    const { data, error } = await sb.from("topic_summary").select("*").order("created_at", { ascending: false });
+    if (error) {
+      $("list").innerHTML = `<div class="card empty">${esc(Forum.dbError(error))}</div>`;
       return;
     }
-    list.innerHTML = rows.map((t) => {
-      const live = t.live_status === "open";
-      let when = "시작 " + Forum.fmtDateTime(t.created_at);
-      if (live && t.ends_at) when += " · 종료 예정 " + Forum.fmtDateTime(t.ends_at);
-      if (!live) when += " · 종료 " + Forum.fmtDateTime(t.closed_at || t.ends_at);
-      return `<article class="panel topic">
-        <span class="badge ${live ? "open" : "closed"}">${live ? "진행 중" : "종료"}</span>
-        <h3>${Forum.esc(t.title)}</h3>
-        ${t.description ? `<p class="desc">${Forum.esc(t.description)}</p>` : ""}
-        <div class="stats"><span>의견 <b>${t.message_count}</b></span><span>참여자 <b>${t.participant_count}</b></span></div>
-        <p class="sub" style="margin:0 0 12px">${when}</p>
-        <div class="actions">
-          ${live
-            ? `<a class="btn sm" href="room.html?id=${t.id}">토론 참여</a>
-               <a class="btn sm secondary" href="report.html?id=${t.id}">분석 대시보드</a>`
-            : `<a class="btn cta" href="report.html?id=${t.id}">📊 분석 대시보드 보기</a>
-               <a class="btn sm secondary" href="room.html?id=${t.id}">토론 내용 보기</a>`}
-          ${isAdmin ? `<button class="btn sm danger" data-del="${t.id}">삭제</button>` : ""}
-        </div>
-      </article>`;
-    }).join("");
+    topics = data || [];
+    roundNo = new Map();
+    topics.slice().sort((a, b) => new Date(a.created_at) - new Date(b.created_at)).forEach((t, i) => roundNo.set(t.id, i + 1));
+    renderTopics();
+  }
+
+  function topicCard(t) {
+    const live = Forum.isLive(t);
+    const c = Forum.category(t.category);
+    const meta = live
+      ? (t.ends_at ? `⏳ 남은 시간 <b>${Forum.remain(t.ends_at)}</b>` : "⏳ 종료 시간 없음")
+      : `🗓️ ${Forum.fmtDateTime(t.closed_at || t.ends_at || t.created_at)} 종료`;
+    const acts = live
+      ? `<a class="btn btn-pri" href="room.html?id=${t.id}">🔒 익명으로 입장하기</a>`
+      : `<a class="btn btn-peach" href="report.html?id=${t.id}">📊 분석 대시보드 보기</a><a class="btn btn-ghost" href="room.html?id=${t.id}">대화 기록</a>`;
+    const admin = !isAdmin ? "" : `<div class="admin-acts">
+        ${live ? `<button class="btn btn-sm btn-danger" data-close="${t.id}" type="button">토론 종료</button>`
+               : `<button class="btn btn-sm btn-soft" data-open="${t.id}" type="button">다시 열기</button>`}
+        <button class="btn btn-sm btn-ghost" data-del="${t.id}" type="button">삭제</button>
+      </div>`;
+    return `<article class="card topic ${live ? "is-live" : ""}">
+      <div class="topic-top">
+        <span class="badge round">제${roundNo.get(t.id) || "-"}회</span>
+        <span class="badge cat" style="background:${c.color}1f;color:${c.color}">${c.icon} ${esc(c.name)}</span>
+        ${live ? '<span class="badge live"><i></i>진행 중</span>' : '<span class="badge done">종료</span>'}
+      </div>
+      <h3>${esc(t.title)}</h3>
+      ${t.description ? `<p>${esc(t.description)}</p>` : ""}
+      <div class="meta"><span>${meta}</span><span>🐾 참여 <b>${t.participant_count || 0}</b>명</span></div>
+      <div class="acts">${acts}</div>
+      ${admin}
+    </article>`;
+  }
+
+  function renderTopics() {
+    const list = topics.filter((t) => {
+      if (filterCat !== "전체" && (t.category || "조직문화") !== filterCat) return false;
+      const live = Forum.isLive(t);
+      if (filterSt === "live" && !live) return false;
+      if (filterSt === "done" && live) return false;
+      return true;
+    });
+    list.sort((a, b) => (Forum.isLive(b) - Forum.isLive(a)) || (new Date(b.created_at) - new Date(a.created_at)));
+    $("list").innerHTML = list.length ? list.map(topicCard).join("")
+      : `<div class="card empty">${topics.length ? "조건에 맞는 토론이 없어요." : "아직 열린 토론이 없어요. 곧 새로운 토론이 시작됩니다 🌱"}</div>`;
   }
 
   $("list").addEventListener("click", async (e) => {
-    const b = e.target.closest("[data-del]");
+    const b = e.target.closest("[data-close],[data-open],[data-del]");
     if (!b) return;
-    if (!confirm("이 토론과 모든 의견, 반응을 삭제합니다. 되돌릴 수 없습니다. 삭제할까요?")) return;
-    const { error } = await sb.rpc("delete_topic", { p_topic: Number(b.dataset.del) });
-    if (error) return Forum.toast(Forum.dbError(error));
-    load();
+    let res;
+    if (b.dataset.close) {
+      if (!confirm("이 토론을 종료할까요? 참여자 화면에 대시보드 이동 안내가 표시됩니다.")) return;
+      res = await sb.rpc("set_topic_status", { p_topic: Number(b.dataset.close), p_status: "closed" });
+    } else if (b.dataset.open) {
+      res = await sb.rpc("set_topic_status", { p_topic: Number(b.dataset.open), p_status: "open" });
+    } else {
+      if (!confirm("토론과 모든 의견·반응을 삭제할까요? 되돌릴 수 없습니다.")) return;
+      res = await sb.rpc("delete_topic", { p_topic: Number(b.dataset.del) });
+    }
+    if (res.error) { Forum.toast(Forum.dbError(res.error)); return; }
+    await loadTopics();
+    await loadActions();
   });
 
-  $("createForm").onsubmit = async (e) => {
-    e.preventDefault();
-    const btn = $("createBtn");
-    btn.disabled = true;
-    const minutes = $("minutes").value ? Number($("minutes").value) : null;
-    const { data, error } = await sb.rpc("create_topic", {
-      p_title: $("title").value.trim(),
-      p_description: $("desc").value.trim(),
-      p_minutes: minutes
-    });
-    btn.disabled = false;
-    if (error) return Forum.toast(Forum.dbError(error));
-    location.href = "room.html?id=" + data;
-  };
+  // Voice → Action 현황
+  async function loadActions() {
+    const { data, error } = await sb.from("action_items").select("id,topic_id,title,category,stage,dept,updated_at").order("updated_at", { ascending: false }).limit(200);
+    if (error) {
+      $("stageSum").innerHTML = "";
+      $("actions").innerHTML = `<div class="empty">${esc(Forum.dbError(error))}</div>`;
+      return;
+    }
+    const items = data || [];
+    const cnt = (ks) => items.filter((x) => ks.includes(x.stage)).length;
+    $("stageSum").innerHTML = [
+      ["2단계", "혁신과제 상정", items.length, "누적 상정 과제"],
+      ["3단계", "부서 검토 중", cnt(["상정", "검토"]), "실행가능성 검토"],
+      ["4단계", "채택·실행 중", cnt(["채택", "실행"]), "실행 과제"],
+      ["완료", "실행 완료", cnt(["완료"]), "보류 " + cnt(["보류"]) + "건"]
+    ].map((s) => `<div class="step"><span class="no">${s[0]}</span><b class="cnt">${s[2]}</b><h4>${s[1]}</h4><p>${s[3]}</p></div>`).join("");
+    if (!items.length) {
+      $("actions").innerHTML = '<div class="empty">아직 상정된 혁신과제가 없어요. 토론이 끝나면 공감을 많이 받은 의견이 이곳에 올라옵니다.</div>';
+      return;
+    }
+    const tmap = new Map(topics.map((t) => [t.id, t]));
+    $("actions").innerHTML = `<table class="tbl"><thead><tr><th>혁신과제</th><th>테마</th><th>단계</th><th>담당 부서</th><th>최근 변경</th></tr></thead><tbody>${
+      items.map((x) => {
+        const t = tmap.get(x.topic_id);
+        const c = Forum.category(x.category);
+        return `<tr><td class="t">${esc(x.title)}<div class="from">${t ? "제" + (roundNo.get(t.id) || "-") + "회 · " + esc(t.title) : ""}</div></td>
+          <td>${c.icon} ${esc(c.name)}</td><td>${Forum.stageBadge(x.stage)}</td><td>${esc(x.dept || "-")}</td><td class="muted">${Forum.fmtDateTime(x.updated_at)}</td></tr>`;
+      }).join("")
+    }</tbody></table>`;
+  }
 
-  await load();
-  setInterval(load, 30000);
+  await loadTopics();
+  await loadActions();
+
+  sb.channel("lobby")
+    .on("postgres_changes", { event: "*", schema: "public", table: "topics" }, () => loadTopics())
+    .on("postgres_changes", { event: "*", schema: "public", table: "action_items" }, () => loadActions())
+    .subscribe();
+  setInterval(renderTopics, 1000 * 15);
+  setInterval(loadTopics, 1000 * 60);
 })();
 </script>
-<div class="art-credit">배경: AI 생성 일러스트</div>
 </body>
 </html>

@@ -65,6 +65,16 @@
     return w;
   }
 
+  // v2: 동사·형용사 활용형("많아서", "늦어져", "늘렸으면")은 키워드에서 뺍니다.
+  const STRIP_TAIL = ["했으면", "하는", "해야", "해서", "하면", "하지", "되지", "되면", "돼서"];
+  const VERBY = /(아서|어서|여서|으면|었으면|았으면|렸으면|겠어|겠다|겠네|네요|군요|는데|던데|니까|어져|아져|져서|져요|어요|아요|어야|아야|었다|았다|였다)$/;
+  function trimVerb(w) {
+    for (const e of STRIP_TAIL) {
+      if (w.length - e.length >= 2 && w.endsWith(e)) return w.slice(0, -e.length);
+    }
+    return w;
+  }
+
   function parseList(text) {
     return String(text || "").split(/[\n,]+/).map((s) => s.trim().toLowerCase()).filter(Boolean);
   }
@@ -110,8 +120,11 @@
       if (!raw || /^\d+$/.test(raw)) return;
       if (syn.has(raw)) { out.push(syn.get(raw)); return; }
       if (stop.has(raw)) return;
-      const w = normalize(raw);
+      let w = normalize(raw);
       if (syn.has(w)) { out.push(syn.get(w)); return; }
+      w = trimVerb(w);
+      if (syn.has(w)) { out.push(syn.get(w)); return; }
+      if (VERBY.test(w) || /^않/.test(w)) return;
       if (w.length < minLen || stop.has(w) || /^\d+$/.test(w)) return;
       out.push(w);
     });

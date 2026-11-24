@@ -1,46 +1,59 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ko">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>새 비밀번호 설정</title>
-<link rel="stylesheet" href="style.css">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<link rel="stylesheet" href="ui.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="config.js"></script>
 <script src="auth.js"></script>
+<title>새 비밀번호 설정 | 의왕도시공사 익명 토론회</title>
 </head>
-<body>
-<main class="card">
-  <h1>새 비밀번호 설정</h1>
-  <p class="sub">새로 사용할 비밀번호를 입력하세요.</p>
-  <form id="form" novalidate>
-    <label for="pw">새 비밀번호 (8자 이상)</label>
-    <input id="pw" type="password" autocomplete="new-password" required>
-    <label for="pw2">새 비밀번호 확인</label>
-    <input id="pw2" type="password" autocomplete="new-password" required>
-    <button class="btn" type="submit" id="btn">비밀번호 변경</button>
-  </form>
-  <div id="msg" class="msg" hidden></div>
-  <p class="foot"><a href="index.html">로그인으로 돌아가기</a></p>
+<body class="auth-body">
+<div class="bg-scene" style="background-image:url(img/bg/lobby.jpg)"></div>
+<main class="auth-wrap" style="grid-template-columns:1fr;max-width:480px">
+  <section class="auth-card">
+    <div class="brand-host" data-brand="index.html" style="margin-bottom:22px"></div>
+    <form id="form" novalidate>
+      <h2>새 비밀번호 설정</h2>
+      <p class="lead">앞으로 사용할 비밀번호를 입력해 주세요.</p>
+      <label class="field"><span>새 비밀번호 (8자 이상)</span>
+        <div class="pw"><input id="pw" type="password" autocomplete="new-password" required><button type="button" data-toggle="pw">표시</button></div></label>
+      <label class="field"><span>새 비밀번호 확인</span>
+        <div class="pw"><input id="pw2" type="password" autocomplete="new-password" required><button type="button" data-toggle="pw2">표시</button></div></label>
+      <button class="btn btn-pri btn-block btn-lg" type="submit">비밀번호 변경</button>
+      <div class="linkrow"><a href="index.html">← 로그인으로 돌아가기</a></div>
+    </form>
+    <div id="msg" class="msg" hidden role="alert"></div>
+  </section>
 </main>
 <script>
-const msg = document.getElementById("msg");
-if (AUTH_NOT_CONFIGURED) showMsg(msg, "config.js 설정이 필요합니다.", "warn");
-document.getElementById("form").onsubmit = async (e) => {
-  e.preventDefault();
-  const pw = document.getElementById("pw").value, pw2 = document.getElementById("pw2").value;
-  if (pw.length < 8) return showMsg(msg, "비밀번호는 8자 이상이어야 합니다.");
-  if (pw !== pw2) return showMsg(msg, "비밀번호가 일치하지 않습니다.");
-  if (AUTH_NOT_CONFIGURED) return;
-  const { data: { session } } = await sb.auth.getSession();
-  if (!session) return showMsg(msg, "재설정 링크가 만료되었거나 올바르지 않습니다. 다시 요청해 주세요.");
-  const btn = document.getElementById("btn"); btn.disabled = true;
-  const { error } = await sb.auth.updateUser({ password: pw });
-  btn.disabled = false;
-  if (error) return showMsg(msg, translateError(error));
-  showMsg(msg, "비밀번호가 변경되었습니다. 잠시 후 이동합니다.", "success");
-  setTimeout(() => location.replace(pageUrl("dashboard.html")), 1500);
-};
+(function () {
+  const $ = (id) => document.getElementById(id);
+  const msg = $("msg");
+  document.querySelectorAll("[data-toggle]").forEach((b) => {
+    b.onclick = () => { const i = $(b.dataset.toggle); const h = i.type === "password"; i.type = h ? "text" : "password"; b.textContent = h ? "숨기기" : "표시"; };
+  });
+  if (window.AUTH_NOT_CONFIGURED) { showMsg(msg, "config.js 설정이 필요합니다.", "warn"); return; }
+  let ready = false;
+  sb.auth.onAuthStateChange((event, session) => { if (session) ready = true; });
+  setTimeout(async () => {
+    const { data } = await sb.auth.getSession();
+    if (data.session) ready = true;
+    if (!ready) showMsg(msg, "재설정 링크가 만료되었거나 올바르지 않습니다. 로그인 화면에서 다시 요청해 주세요.", "warn");
+  }, 1200);
+  $("form").onsubmit = async (e) => {
+    e.preventDefault();
+    const pw = $("pw").value;
+    if (pw.length < 8) { showMsg(msg, "비밀번호는 8자 이상으로 입력해 주세요."); return; }
+    if (pw !== $("pw2").value) { showMsg(msg, "비밀번호 확인이 일치하지 않습니다."); return; }
+    const { error } = await sb.auth.updateUser({ password: pw });
+    if (error) { showMsg(msg, translateError(error)); return; }
+    showMsg(msg, "비밀번호를 바꿨어요. 잠시 후 홈으로 이동합니다.", "ok");
+    setTimeout(() => location.replace(pageUrl("dashboard.html")), 1500);
+  };
+})();
 </script>
 </body>
 </html>
