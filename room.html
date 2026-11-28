@@ -9,6 +9,7 @@
 <script src="config.js"></script>
 <script src="auth.js"></script>
 <script src="forum.js"></script>
+<script src="gate.js"></script>
 <script src="keywords.js"></script>
 <script src="profanity.js"></script>
 <title>토론방 | 의왕도시공사 익명 토론회</title>
@@ -236,6 +237,7 @@
   const session = await Forum.requireSession();
   if (!session) return;
   Forum.bindLogout("logout");
+  if (!(await Gate.guard())) return;
 
   const reportHref = "report.html?id=" + topicId;
   ["reportLink", "bannerCta", "bottomCta", "endCta"].forEach((id) => { $(id).href = reportHref; });

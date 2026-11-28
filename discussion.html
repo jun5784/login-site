@@ -9,6 +9,7 @@
 <script src="config.js"></script>
 <script src="auth.js"></script>
 <script src="forum.js"></script>
+<script src="gate.js"></script>
 <title>혁신 토론방 | 의왕도시공사 익명 토론회</title>
 <style>
 .hero{display:grid;grid-template-columns:1.4fr 1fr;gap:18px}
@@ -112,6 +113,7 @@
   const session = await Forum.requireSession();
   if (!session) return;
   Forum.bindLogout("logout");
+  if (!(await Gate.guard())) return;
 
   let isAdmin = false;
   let topics = [];

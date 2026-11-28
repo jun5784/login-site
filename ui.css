@@ -164,3 +164,31 @@ button,input,select,textarea{font:inherit;color:inherit}
   .logo-watermark.in-scene{width:70vw;height:40vw;right:15vw;bottom:3vh;background-position:center bottom;opacity:.12}
 }
 @media print{.logo-watermark{display:none!important}}
+
+/* ===== 입장 시간 제한 (gate.js) ===== */
+html.gate-locked,html.gate-locked body{overflow:hidden}
+.gate{position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;padding:24px;background:rgba(247,244,238,.86);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);overflow:auto}
+.gate-card{width:min(560px,100%);background:#fff;border:1px solid var(--line);border-radius:var(--r-xl);box-shadow:var(--sh);padding:36px 32px 30px;text-align:center}
+.gate-card .brand-host{display:flex;justify-content:center;margin-bottom:18px}
+.gate-eyebrow{display:inline-block;padding:6px 14px;border-radius:999px;background:var(--anon-soft);color:var(--anon);font-weight:700;font-size:13px}
+.gate-card h1{margin:14px 0 8px;font-size:24px}
+.gate-card h1 b{color:var(--mint)}
+.gate-lead{margin:0 0 22px;color:var(--sub)}
+.gate-clock{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:0 0 22px}
+.gate-clock div{background:var(--mint-soft);border-radius:var(--r);padding:14px 4px 10px}
+.gate-clock b{display:block;font-size:30px;font-weight:800;color:#2f7f66;font-variant-numeric:tabular-nums;line-height:1.1}
+.gate-clock span{font-size:12px;color:var(--sub)}
+.gate-notes{list-style:none;margin:0 0 22px;padding:14px 16px;background:var(--bg);border-radius:var(--r);text-align:left;font-size:14px;color:var(--sub)}
+.gate-notes li+li{margin-top:6px}
+.gate-admin{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:150;display:flex;gap:10px;align-items:center;padding:10px 18px;border-radius:999px;background:#2f3437;color:#fff;font-size:13px;box-shadow:var(--sh-sm);max-width:calc(100% - 24px)}
+.gate-admin b{color:#ffd59e}
+.gate-admin em{font-style:normal;font-variant-numeric:tabular-nums}
+.btn.is-locked{background:#cfd6d2!important;border-color:#cfd6d2!important;color:#4b5563!important;cursor:not-allowed;box-shadow:none!important}
+.gate-left{font-size:12px;font-weight:600;opacity:.8;margin-left:6px}
+.gate-home-note{margin:14px 0 0;padding:12px 14px;border-radius:var(--r);background:var(--mint-soft);color:#2f7f66;font-size:14px}
+@media (max-width:520px){.gate-card{padding:28px 18px 22px}.gate-card h1{font-size:20px}.gate-clock b{font-size:24px}}
+@media print{.gate,.gate-admin{display:none!important}}
+
+/* ===== 가입 후 로그인 안내 ===== */
+.msg .resend{margin-left:6px;padding:4px 10px;border-radius:999px;border:1px solid currentColor;background:none;cursor:pointer;font-size:13px;font-weight:700}
+.field input.just-filled{background:var(--mint-soft)}

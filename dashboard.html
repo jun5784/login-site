@@ -9,6 +9,7 @@
 <script src="config.js"></script>
 <script src="auth.js"></script>
 <script src="forum.js"></script>
+<script src="gate.js"></script>
 <title>홈 | 의왕도시공사 혁신과 소통을 위한 익명 토론회</title>
 <style>
 .home-hero{display:grid;grid-template-columns:1.3fr 1fr;gap:18px;align-items:stretch}
@@ -47,7 +48,8 @@
       <span class="eyebrow">Voice → Action</span>
       <h1>반가워요. 오늘은 어떤 생각을 나눠 볼까요?</h1>
       <p>토론방에 들어가면 이름 대신 귀여운 동물 닉네임이 정해집니다.<br>직급과 부서를 내려놓고, 우리 공사가 더 나아질 방법을 편하게 이야기해 주세요.</p>
-      <a class="btn btn-pri btn-lg" href="discussion.html">혁신 토론방 입장하기 →</a>
+      <a id="enterBtn" class="btn btn-pri btn-lg" href="discussion.html">혁신 토론방 입장하기 →</a>
+      <div id="gateNote" class="gate-home-note" hidden>🗓️ 토론회는 <b data-open-label></b>에 열립니다. 그 전에는 입장할 수 없어요.</div>
       <div class="account"><span>로그인 계정</span><code id="email"></code><span>· 이 정보는 토론방에 표시되지 않습니다.</span></div>
     </div>
     <div class="card mask-card">
@@ -92,6 +94,7 @@
     `<div class="card theme"><h4><span>${c.icon}</span>${Forum.esc(c.name)}</h4><p>${c.examples.map(Forum.esc).join(" · ")}</p></div>`
   ).join("");
   document.getElementById("main").hidden = false;
+  Gate.lockButton(document.getElementById("enterBtn"), document.getElementById("gateNote"));
 })();
 </script>
 </body>

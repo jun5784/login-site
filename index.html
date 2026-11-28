@@ -123,6 +123,7 @@
     if (on) { btn.dataset.label = btn.textContent; btn.textContent = label || "잠시만요…"; }
     else if (btn.dataset.label) { btn.textContent = btn.dataset.label; }
   }
+  const Forum_esc = (v) => String(v).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const validEmail = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
 
   if (window.AUTH_NOT_CONFIGURED) {
@@ -130,7 +131,46 @@
     document.querySelectorAll("form button[type=submit], #githubBtn").forEach((b) => { b.disabled = true; });
     return;
   }
-  sb.auth.getSession().then(({ data }) => { if (data && data.session) location.replace(pageUrl("dashboard.html")); });
+  // 인증 메일 링크로 돌아온 경우: 자동 로그인 대신 로그인 화면을 보여 줍니다.
+  const params = new URLSearchParams(location.search);
+  const fromVerify = params.has("verified") || /type=signup/.test(location.hash);
+  if (fromVerify) {
+    sb.auth.getSession().then(async ({ data }) => {
+      const mail = data && data.session && data.session.user ? data.session.user.email : (params.get("email") || "");
+      if (data && data.session) await sb.auth.signOut();
+      history.replaceState(null, "", location.pathname);
+      goLogin(mail, "✅ 이메일 인증이 완료되었어요. 가입한 이메일과 비밀번호로 로그인해 주세요.");
+    });
+  } else {
+    sb.auth.getSession().then(({ data }) => { if (data && data.session) location.replace(pageUrl("dashboard.html")); });
+  }
+
+  // 가입을 마친 뒤 로그인 화면으로 이동하고 이메일을 채워 둡니다.
+  function goLogin(email, text, extraHtml) {
+    show("login");
+    if (email) {
+      const i = $("loginEmail");
+      i.value = email;
+      i.classList.add("just-filled");
+      setTimeout(() => i.classList.remove("just-filled"), 2500);
+    }
+    setTimeout(() => {
+      showMsg(msg, text, "ok");
+      if (extraHtml) msg.insertAdjacentHTML("beforeend", extraHtml);
+      $("loginPw").focus();
+    }, 40);
+  }
+
+  // 인증 메일 다시 보내기
+  async function resend(email) {
+    const { error } = await sb.auth.resend({ type: "signup", email: email, options: { emailRedirectTo: pageUrl("index.html?verified=1") } });
+    if (error) { showMsg(msg, translateError(error)); return; }
+    showMsg(msg, "📮 " + email + " 으로 인증 메일을 다시 보냈어요. 메일의 링크를 누른 뒤 여기서 로그인해 주세요.", "ok");
+  }
+  msg.addEventListener("click", (e) => {
+    const b = e.target.closest("[data-resend]");
+    if (b) { e.preventDefault(); resend(b.getAttribute("data-resend")); }
+  });
 
   forms.login.onsubmit = async (e) => {
     e.preventDefault();
@@ -140,7 +180,13 @@
     busy(btn, true, "로그인 중…");
     const { error } = await sb.auth.signInWithPassword({ email: email, password: $("loginPw").value });
     busy(btn, false);
-    if (error) { showMsg(msg, translateError(error)); return; }
+    if (error) {
+      showMsg(msg, translateError(error));
+      if (/Email not confirmed/i.test(error.message || "")) {
+        msg.insertAdjacentHTML("beforeend", '<button type="button" class="resend" data-resend="' + Forum_esc(email) + '">인증 메일 다시 보내기</button>');
+      }
+      return;
+    }
     location.replace(pageUrl("dashboard.html"));
   };
 
@@ -155,18 +201,25 @@
     const btn = forms.signup.querySelector("button[type=submit]");
     busy(btn, true, "가입하는 중…");
     const { data, error } = await sb.auth.signUp({
-      email: email, password: pw, options: { emailRedirectTo: pageUrl("dashboard.html") }
+      email: email, password: pw, options: { emailRedirectTo: pageUrl("index.html?verified=1") }
     });
     busy(btn, false);
     if (error) { showMsg(msg, translateError(error)); return; }
-    if (data.session) { location.replace(pageUrl("dashboard.html")); return; }
-    if (data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
-      showMsg(msg, "이미 가입된 이메일입니다. 로그인해 주세요.", "warn");
-      return;
-    }
     forms.signup.reset();
     $("pwBar").style.width = "0";
-    showMsg(msg, "📮 " + email + " 으로 인증 메일을 보냈어요. 메일의 링크를 누르면 가입이 완료됩니다. (스팸함도 확인해 주세요)", "ok");
+    if (data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
+      goLogin(email, "이미 가입된 이메일이에요. 비밀번호를 입력해 로그인해 주세요.");
+      return;
+    }
+    if (data.session) {
+      // 메일 인증을 끈 경우: 가입 즉시 생긴 로그인 상태를 정리하고, 직접 로그인하도록 안내합니다.
+      await sb.auth.signOut();
+      goLogin(email, "🎉 가입이 완료되었어요! 방금 만든 비밀번호로 로그인해 주세요.");
+      return;
+    }
+    goLogin(email,
+      "📮 " + email + " 으로 인증 메일을 보냈어요. ① 메일의 [인증] 링크를 누르고 ② 이 화면에서 비밀번호를 입력해 로그인해 주세요. (스팸함도 확인해 주세요)",
+      '<button type="button" class="resend" data-resend="' + Forum_esc(email) + '">메일이 안 왔어요</button>');
   };
 
   forms.forgot.onsubmit = async (e) => {
